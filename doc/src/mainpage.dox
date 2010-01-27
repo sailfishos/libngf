@@ -1,0 +1,16 @@
+/*! \mainpage libngf - Non-Graphic Feedback client library
+ *
+ * \section intro_sec Introduction
+ *
+ * libngf is a client library for accessing non-graphical events.
+ *
+ * \section getting_started_sec Getting started
+ *
+ * \section features_sec Core features
+ * 
+ * \section api_reference_sec API reference
+ *
+ * - \link client.h Client API \endlink
+ * - \link ngf.h Pre-defined events \endlink
+ */
+

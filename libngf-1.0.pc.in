@@ -1,0 +1,13 @@
+prefix=/usr
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include/libngf-1.0
+toolsdir=${exec_prefix}/bin
+
+Name: libngf
+Description: non-graphical feedback client library
+Version: 0.1
+Libs: -L${libdir} -lngf-1.0 -lm
+Cflags: -I${includedir}
+
+

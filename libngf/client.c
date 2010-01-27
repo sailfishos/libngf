@@ -1,0 +1,477 @@
+/*
+ * libngf - Non-graphical feedback library
+ * This file is part of libngf.
+ *
+ * Copyright (C) 2010 Nokia Corporation. All rights reserved.
+ *
+ * Contact: Xun Chen <xun.chen@nokia.com>
+ *
+ * This software, including documentation, is protected by copyright
+ * controlled by Nokia Corporation. All rights are reserved.
+ * Copying, including reproducing, storing, adapting or translating,
+ * any or all of this material requires the prior written consent of
+ * Nokia Corporation. This material also contains confidential
+ * information which may not be disclosed to others without the prior
+ * written consent of Nokia.
+ */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <dbus/dbus.h>
+
+#include "list_p.h"
+#include "proplist.h"
+#include "client.h"
+
+/** DBus name for NGF */
+#define NGF_DBUS_NAME               "com.nokia.NonGraphicFeedback1"
+
+/** DBus path for NGF */
+#define NGF_DBUS_PATH               "/com/nokia/NonGraphicFeedback1"
+
+/** DBus interface for NGF */
+#define NGF_DBUS_IFACE              "com.nokia.NonGraphicFeedback1"
+
+/** DBus method for playing event */
+#define NGF_DBUS_METHOD_PLAY        "Play"
+
+/** DBus method for stopping event */
+#define NGF_DBUS_METHOD_STOP        "Stop"
+
+/** DBus completion signal, which is fired when the event is completed */
+#define NGF_DBUS_SIGNAL_COMPLETED   "Completed"
+
+/** DBus failed isgnal, which is fired when the event has for some reason failed */
+#define NGF_DBUS_SIGNAL_FAILED      "Failed"
+
+typedef struct _NgfReply NgfReply;
+typedef struct _NgfEvent NgfEvent;
+
+struct _NgfReply
+{
+    LIST_INIT (NgfReply)
+
+    uint32_t    serial;
+    uint32_t    event_id;
+    int         stop_set;
+};
+
+struct _NgfEvent
+{
+    LIST_INIT (NgfEvent)
+
+    uint32_t    event_id;
+    uint32_t    policy_id;
+};
+
+struct _NgfClient
+{
+    DBusConnection  *connection;
+    NgfCallback     callback;
+    void            *userdata;
+    uint32_t        play_id;
+
+    NgfReply        *pending_replies;
+    NgfEvent        *active_events;
+};
+
+/* DBus bus matching can't do matching by integers, only strings. To get around this and avoid
+   waking other clients we match by arg1, which is the string representation of the policy id. */
+static const char* signal_match_template = "type=signal,interface=" NGF_DBUS_IFACE ",member=%s,arg1=%d";
+
+static void
+_send_stop_event (DBusConnection *connection,
+                  uint32_t policy_id)
+{
+    DBusMessage *msg = NULL;
+    DBusMessageIter sub;
+    dbus_uint32_t serial = 0;
+
+    msg = dbus_message_new_method_call (NGF_DBUS_NAME, NGF_DBUS_PATH,
+        NGF_DBUS_IFACE, NGF_DBUS_METHOD_STOP);
+
+    dbus_message_iter_init_append (msg, &sub);
+    dbus_message_iter_append_basic (&sub, DBUS_TYPE_UINT32, &policy_id);
+
+    dbus_connection_send (connection, msg, &serial);
+    dbus_message_unref (msg);
+}
+
+static char*
+_strdup_print (const char *fmt, ...)
+{
+    int size = 100, bytes_printed;
+    va_list args;
+    char *str = NULL, *re = NULL;
+
+    if ((str = (char*) malloc (sizeof (char) * size)) == NULL)
+        return NULL;
+
+    while (1) {
+        va_start (args, fmt);
+        bytes_printed = vsnprintf (str, size, fmt, args);
+        va_end (args);
+
+        if (bytes_printed > -1 && bytes_printed < size)
+            return str;
+
+        if (bytes_printed > 1)
+            size = bytes_printed + 1;
+        else
+            size *= 2;
+
+        if ((re = (char*) realloc (str, size)) == NULL) {
+            free (str);
+            return NULL;
+        }
+        else {
+            str = re;
+        }
+    }
+
+    return NULL;
+}
+
+static void
+_signal_set_match (DBusConnection *connection,
+                   int add,
+                   const char *member,
+                   uint32_t policy_id)
+{
+    DBusError error;
+    char *match = NULL;
+
+    match = _strdup_print (signal_match_template, member, policy_id);
+    if (match == NULL)
+        return;
+
+    dbus_error_init (&error);
+
+    if (add) {
+        dbus_bus_add_match (connection, match, &error);
+    }
+    else {
+        dbus_bus_remove_match (connection, match, &error);
+    }
+
+    if (dbus_error_is_set (&error)) {
+        dbus_error_free (&error);
+    }
+
+    free (match);
+}
+
+static DBusHandlerResult
+_message_handle_return (NgfClient *client,
+                        DBusMessage *msg)
+{
+    NgfReply *reply_iter = NULL, *reply = NULL;
+    NgfEvent *event = NULL;
+
+    DBusMessageIter iter;
+    uint32_t serial = 0;
+    uint32_t policy_id = 0;
+
+    serial = dbus_message_get_reply_serial (msg);
+    for (reply_iter = client->pending_replies; reply_iter; reply_iter = reply_iter->next) {
+        if (reply_iter->serial == serial) {
+            reply = reply_iter;
+            break;
+        }
+    }
+
+    if (reply == NULL)
+        goto done;
+
+    dbus_message_iter_init (msg, &iter);
+    if (dbus_message_iter_get_arg_type (&iter) != DBUS_TYPE_UINT32)
+        goto done;
+
+    dbus_message_iter_get_basic (&iter, &policy_id);
+
+    if (policy_id > 0) {
+        if (reply->stop_set) {
+            _send_stop_event (client->connection, policy_id);
+            goto done;
+        }
+
+        event = (NgfEvent*) malloc (sizeof (NgfEvent));
+        memset (event, 0, sizeof (NgfEvent));
+
+        event->event_id = reply->event_id;
+        event->policy_id = policy_id;
+
+        _signal_set_match (client->connection, 1, NGF_DBUS_SIGNAL_COMPLETED, event->policy_id);
+        _signal_set_match (client->connection, 1, NGF_DBUS_SIGNAL_FAILED, event->policy_id);
+
+        LIST_APPEND (client->active_events, event);
+    }
+
+done:
+    if (reply) {
+        LIST_REMOVE (client->pending_replies, reply);
+        free (reply);
+    }
+
+    return DBUS_HANDLER_RESULT_HANDLED;
+}
+
+static DBusHandlerResult
+_message_handle_signal (NgfClient *client,
+                        DBusMessage *msg)
+{
+    NgfEvent *event = NULL;
+    DBusMessageIter iter;
+    uint32_t policy_id = 0;
+    NgfEventState state = 0;
+
+    if (!dbus_message_has_interface (msg, NGF_DBUS_IFACE))
+        return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+
+    if (dbus_message_has_member (msg, NGF_DBUS_SIGNAL_COMPLETED))
+        state = NGF_EVENT_COMPLETED;
+    else if (dbus_message_has_member (msg, NGF_DBUS_SIGNAL_FAILED))
+        state = NGF_EVENT_FAILED;
+    else
+        goto failed;
+
+    dbus_message_iter_init (msg, &iter);
+
+    if (dbus_message_iter_get_arg_type (&iter) != DBUS_TYPE_UINT32)
+        goto failed;
+
+    dbus_message_iter_get_basic (&iter, &policy_id);
+
+    /* Try to find a matching policy id from the active events. */
+
+    for (event = client->active_events; event; event = event->next) {
+        if (event->policy_id == policy_id) {
+
+            /* Trigger the callback, if specified, and remove the event from
+               active events. */
+
+            if (client->callback)
+                client->callback (client, event->event_id, state, client->userdata);
+
+            _signal_set_match (client->connection, 0, NGF_DBUS_SIGNAL_COMPLETED, event->policy_id);
+            _signal_set_match (client->connection, 0, NGF_DBUS_SIGNAL_FAILED, event->policy_id);
+
+             LIST_REMOVE (client->active_events, event);
+            free (event);
+            break;
+        }
+    }
+
+    return DBUS_HANDLER_RESULT_HANDLED;
+
+failed:
+    return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+}
+
+static DBusHandlerResult
+_message_filter_cb (DBusConnection *connection,
+                    DBusMessage *msg,
+                    void *userdata)
+{
+    NgfClient *client = (NgfClient*) userdata;
+
+    switch (dbus_message_get_type (msg)) {
+        case DBUS_MESSAGE_TYPE_METHOD_RETURN:
+            return _message_handle_return (client, msg);
+
+        case DBUS_MESSAGE_TYPE_SIGNAL:
+            return _message_handle_signal (client, msg);
+
+        default:
+            break;
+    }
+
+    return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+}
+
+NgfClient*
+ngf_client_create (NgfTransport transport,
+                   ...)
+{
+    NgfClient *c = NULL;
+    va_list transport_args;
+
+    c = (NgfClient*) malloc (sizeof (NgfClient));
+    if (c == NULL)
+        goto failed;
+
+    memset (c, 0, sizeof (NgfClient));
+
+    va_start (transport_args, transport);
+
+    c->connection = va_arg (transport_args, DBusConnection*);
+    if (!c->connection)
+        goto failed;
+
+    va_end (transport_args);
+
+    dbus_connection_add_filter (c->connection, _message_filter_cb, c, NULL);
+    return c;
+
+failed:
+    ngf_client_destroy (c);
+    return NULL;
+}
+
+static void
+_stop_active_event (NgfEvent *event, void *userdata)
+{
+    NgfClient *client = (NgfClient*) userdata;
+
+    _signal_set_match (client->connection, 0, NGF_DBUS_SIGNAL_COMPLETED, event->policy_id);
+    _signal_set_match (client->connection, 0, NGF_DBUS_SIGNAL_FAILED, event->policy_id);
+
+    _send_stop_event (client->connection, event->policy_id);
+}
+
+static void
+_free_active_event (NgfEvent *event, void *userdata)
+{
+    free (event);
+}
+
+static void
+_free_pending_reply (NgfReply *reply, void *userdata)
+{
+    free (reply);
+}
+
+void
+ngf_client_destroy (NgfClient *client)
+{
+    NgfReply *reply = NULL;
+    NgfEvent *event = NULL;
+
+    if (client == NULL)
+        return;
+
+    /* Free and stop any active event. */
+    LIST_FOREACH (client->active_events, _stop_active_event, client);
+    LIST_FOREACH (client->active_events, _free_active_event, client);
+
+    /* Free any pending replies. */
+    LIST_FOREACH (client->pending_replies, _free_pending_reply, client);
+
+    if (client->connection) {
+        dbus_connection_remove_filter (client->connection, _message_filter_cb, client);
+        client->connection = NULL;
+    }
+
+    free (client);
+}
+
+void
+ngf_client_set_callback (NgfClient *client,
+                         NgfCallback callback,
+                         void *userdata)
+{
+    client->callback = callback;
+    client->userdata = userdata;
+}
+
+static void
+_append_property (const char *key,
+                  const char *value,
+                  void *userdata)
+{
+    DBusMessageIter *iter = (DBusMessageIter*) userdata;
+    DBusMessageIter sub, ssub;
+
+    dbus_message_iter_open_container (iter, DBUS_TYPE_DICT_ENTRY, 0, &sub);
+    dbus_message_iter_append_basic (&sub, DBUS_TYPE_STRING, &key);
+
+    dbus_message_iter_open_container (&sub, DBUS_TYPE_VARIANT, DBUS_TYPE_STRING_AS_STRING, &ssub);
+    dbus_message_iter_append_basic (&ssub, DBUS_TYPE_STRING, &value);
+    dbus_message_iter_close_container(&sub, &ssub);
+
+    dbus_message_iter_close_container (iter, &sub);
+}
+
+uint32_t
+ngf_client_play_event (NgfClient *client,
+                       const char *event,
+                       NgfProplist *proplist)
+{
+    DBusMessage *msg = NULL;
+    NgfReply *reply = NULL;
+    const char *key = NULL, *value = NULL;
+
+    DBusMessageIter iter, sub, ssub;
+
+    dbus_uint32_t serial = 0;
+    uint32_t event_id = 0;
+
+    if (client == NULL || event == NULL)
+        return 0;
+
+    event_id = ++client->play_id;
+
+    /* Send the actual message to the service. */
+
+    msg = dbus_message_new_method_call (NGF_DBUS_NAME, NGF_DBUS_PATH,
+        NGF_DBUS_IFACE, NGF_DBUS_METHOD_PLAY);
+
+    dbus_message_iter_init_append (msg, &iter);
+    dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &event);
+
+    /* Append all properties from the property list */
+    dbus_message_iter_open_container (&iter, DBUS_TYPE_ARRAY, "{sv}", &sub);
+    ngf_proplist_foreach (proplist, _append_property, &sub);
+    dbus_message_iter_close_container (&iter, &sub);
+
+    dbus_connection_send (client->connection, msg, &serial);
+    dbus_message_unref (msg);
+
+    reply = (NgfReply*) malloc (sizeof (NgfReply));
+    memset (reply, 0, sizeof (NgfReply));
+
+    reply->serial = serial;
+    reply->event_id = event_id;
+
+    LIST_APPEND (client->pending_replies, reply);
+
+    return event_id;
+}
+
+void
+ngf_client_stop_event (NgfClient *client,
+                       uint32_t id)
+{
+    NgfEvent *event = NULL;
+    NgfReply *reply = NULL;
+
+    if (client == NULL)
+        return;
+
+    /* First, go through the active events */
+
+    event = client->active_events;
+    while (event) {
+        if (event->event_id == id) {
+            _stop_active_event (event, client);
+            LIST_REMOVE (client->active_events, event);
+            _free_active_event (event, client);
+            break;
+        }
+
+        event = event->next;
+    }
+
+    /* Look the event id from the pending replies */
+
+    reply = client->pending_replies;
+    while (reply) {
+        if (reply->event_id == id) {
+            reply->stop_set = TRUE;
+            break;
+        }
+
+        reply = reply->next;
+    }
+}

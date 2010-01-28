@@ -52,9 +52,9 @@ struct _NgfReply
 {
     LIST_INIT (NgfReply)
 
-    uint32_t    serial;
-    uint32_t    event_id;
-    int         stop_set;
+    DBusPendingCall *pending;
+    uint32_t        event_id;
+    int             stop_set;
 };
 
 struct _NgfEvent
@@ -162,20 +162,21 @@ _signal_set_match (DBusConnection *connection,
     free (match);
 }
 
-static DBusHandlerResult
-_message_handle_return (NgfClient *client,
-                        DBusMessage *msg)
+static void
+_pending_play_reply (DBusPendingCall *pending,
+                     void *userdata)
 {
+    NgfClient *client = (NgfClient*) userdata;
+
     NgfReply *reply_iter = NULL, *reply = NULL;
     NgfEvent *event = NULL;
 
+    DBusMessage *msg = NULL;
     DBusMessageIter iter;
-    uint32_t serial = 0;
     uint32_t policy_id = 0;
 
-    serial = dbus_message_get_reply_serial (msg);
     for (reply_iter = client->pending_replies; reply_iter; reply_iter = reply_iter->next) {
-        if (reply_iter->serial == serial) {
+        if (reply_iter->pending == pending) {
             reply = reply_iter;
             break;
         }
@@ -184,6 +185,7 @@ _message_handle_return (NgfClient *client,
     if (reply == NULL)
         goto done;
 
+    msg = dbus_pending_call_steal_reply (pending);
     dbus_message_iter_init (msg, &iter);
     if (dbus_message_iter_get_arg_type (&iter) != DBUS_TYPE_UINT32)
         goto done;
@@ -214,20 +216,26 @@ done:
         free (reply);
     }
 
-    return DBUS_HANDLER_RESULT_HANDLED;
+    dbus_pending_call_unref (pending);
 }
 
 static DBusHandlerResult
-_message_handle_signal (NgfClient *client,
-                        DBusMessage *msg)
+_message_filter_cb (DBusConnection *connection,
+                    DBusMessage *msg,
+                    void *userdata)
 {
+    NgfClient *client = (NgfClient*) userdata;
+
     NgfEvent *event = NULL;
     DBusMessageIter iter;
     uint32_t policy_id = 0;
     NgfEventState state = 0;
 
+    if (dbus_message_get_type (msg) != DBUS_MESSAGE_TYPE_SIGNAL)
+        return DBUS_HANDLER_RESULT_HANDLED;
+
     if (!dbus_message_has_interface (msg, NGF_DBUS_IFACE))
-        return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+        return DBUS_HANDLER_RESULT_HANDLED;
 
     if (dbus_message_has_member (msg, NGF_DBUS_SIGNAL_COMPLETED))
         state = NGF_EVENT_COMPLETED;
@@ -266,27 +274,6 @@ _message_handle_signal (NgfClient *client,
     return DBUS_HANDLER_RESULT_HANDLED;
 
 failed:
-    return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
-}
-
-static DBusHandlerResult
-_message_filter_cb (DBusConnection *connection,
-                    DBusMessage *msg,
-                    void *userdata)
-{
-    NgfClient *client = (NgfClient*) userdata;
-
-    switch (dbus_message_get_type (msg)) {
-        case DBUS_MESSAGE_TYPE_METHOD_RETURN:
-            return _message_handle_return (client, msg);
-
-        case DBUS_MESSAGE_TYPE_SIGNAL:
-            return _message_handle_signal (client, msg);
-
-        default:
-            break;
-    }
-
     return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 }
 
@@ -398,13 +385,12 @@ ngf_client_play_event (NgfClient *client,
                        const char *event,
                        NgfProplist *proplist)
 {
+    DBusPendingCall *pending = NULL;
     DBusMessage *msg = NULL;
     NgfReply *reply = NULL;
     const char *key = NULL, *value = NULL;
 
     DBusMessageIter iter, sub, ssub;
-
-    dbus_uint32_t serial = 0;
     uint32_t event_id = 0;
 
     if (client == NULL || event == NULL)
@@ -425,16 +411,21 @@ ngf_client_play_event (NgfClient *client,
     ngf_proplist_foreach (proplist, _append_property, &sub);
     dbus_message_iter_close_container (&iter, &sub);
 
-    dbus_connection_send (client->connection, msg, &serial);
+    dbus_connection_send_with_reply (client->connection, msg, &pending, -1);
     dbus_message_unref (msg);
+
+    if (pending == NULL)
+        return 0;
 
     reply = (NgfReply*) malloc (sizeof (NgfReply));
     memset (reply, 0, sizeof (NgfReply));
 
-    reply->serial = serial;
+    reply->pending = pending;
     reply->event_id = event_id;
 
     LIST_APPEND (client->pending_replies, reply);
+
+    dbus_pending_call_set_notify (pending, _pending_play_reply, client, NULL);
 
     return event_id;
 }

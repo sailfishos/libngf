@@ -39,11 +39,9 @@
 /** DBus method for stopping event */
 #define NGF_DBUS_METHOD_STOP        "Stop"
 
-/** DBus completion signal, which is fired when the event is completed */
-#define NGF_DBUS_SIGNAL_COMPLETED   "Completed"
+/** DBus method call that is sent to us when the event state changes */
+#define NGF_DBUS_INTERNAL_STATUS    "Status"
 
-/** DBus failed isgnal, which is fired when the event has for some reason failed */
-#define NGF_DBUS_SIGNAL_FAILED      "Failed"
 
 typedef struct _NgfReply NgfReply;
 typedef struct _NgfEvent NgfEvent;
@@ -76,10 +74,6 @@ struct _NgfClient
     NgfEvent        *active_events;
 };
 
-/* DBus bus matching can't do matching by integers, only strings. To get around this and avoid
-   waking other clients we match by arg1, which is the string representation of the policy id. */
-static const char* signal_match_template = "type=signal,interface=" NGF_DBUS_IFACE ",member=%s,arg1=%d";
-
 static void
 _send_stop_event (DBusConnection *connection,
                   uint32_t policy_id)
@@ -96,70 +90,6 @@ _send_stop_event (DBusConnection *connection,
 
     dbus_connection_send (connection, msg, &serial);
     dbus_message_unref (msg);
-}
-
-static char*
-_strdup_print (const char *fmt, ...)
-{
-    int size = 100, bytes_printed;
-    va_list args;
-    char *str = NULL, *re = NULL;
-
-    if ((str = (char*) malloc (sizeof (char) * size)) == NULL)
-        return NULL;
-
-    while (1) {
-        va_start (args, fmt);
-        bytes_printed = vsnprintf (str, size, fmt, args);
-        va_end (args);
-
-        if (bytes_printed > -1 && bytes_printed < size)
-            return str;
-
-        if (bytes_printed > 1)
-            size = bytes_printed + 1;
-        else
-            size *= 2;
-
-        if ((re = (char*) realloc (str, size)) == NULL) {
-            free (str);
-            return NULL;
-        }
-        else {
-            str = re;
-        }
-    }
-
-    return NULL;
-}
-
-static void
-_signal_set_match (DBusConnection *connection,
-                   int add,
-                   const char *member,
-                   uint32_t policy_id)
-{
-    DBusError error;
-    char *match = NULL;
-
-    match = _strdup_print (signal_match_template, member, policy_id);
-    if (match == NULL)
-        return;
-
-    dbus_error_init (&error);
-
-    if (add) {
-        dbus_bus_add_match (connection, match, &error);
-    }
-    else {
-        dbus_bus_remove_match (connection, match, &error);
-    }
-
-    if (dbus_error_is_set (&error)) {
-        dbus_error_free (&error);
-    }
-
-    free (match);
 }
 
 static void
@@ -204,9 +134,6 @@ _pending_play_reply (DBusPendingCall *pending,
         event->event_id = reply->event_id;
         event->policy_id = policy_id;
 
-        _signal_set_match (client->connection, 1, NGF_DBUS_SIGNAL_COMPLETED, event->policy_id);
-        _signal_set_match (client->connection, 1, NGF_DBUS_SIGNAL_FAILED, event->policy_id);
-
         LIST_APPEND (client->active_events, event);
     }
 
@@ -226,30 +153,23 @@ _message_filter_cb (DBusConnection *connection,
 {
     NgfClient *client = (NgfClient*) userdata;
 
+    DBusError error;
     NgfEvent *event = NULL;
-    DBusMessageIter iter;
     uint32_t policy_id = 0;
-    NgfEventState state = 0;
+    uint32_t state = 0;
+    int success = 0;
 
-    if (dbus_message_get_type (msg) != DBUS_MESSAGE_TYPE_SIGNAL)
-        return DBUS_HANDLER_RESULT_HANDLED;
+    if (!dbus_message_is_method_call (msg, NGF_DBUS_IFACE, NGF_DBUS_INTERNAL_STATUS))
+        return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 
-    if (!dbus_message_has_interface (msg, NGF_DBUS_IFACE))
-        return DBUS_HANDLER_RESULT_HANDLED;
+    dbus_error_init (&error);
+    success = dbus_message_get_args (msg, &error,
+        DBUS_TYPE_UINT32, &policy_id, DBUS_TYPE_UINT32, &state, DBUS_TYPE_INVALID);
 
-    if (dbus_message_has_member (msg, NGF_DBUS_SIGNAL_COMPLETED))
-        state = NGF_EVENT_COMPLETED;
-    else if (dbus_message_has_member (msg, NGF_DBUS_SIGNAL_FAILED))
-        state = NGF_EVENT_FAILED;
-    else
-        goto failed;
-
-    dbus_message_iter_init (msg, &iter);
-
-    if (dbus_message_iter_get_arg_type (&iter) != DBUS_TYPE_UINT32)
-        goto failed;
-
-    dbus_message_iter_get_basic (&iter, &policy_id);
+    if (!success) {
+        dbus_error_free (&error);
+        return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+    }
 
     /* Try to find a matching policy id from the active events. */
 
@@ -261,9 +181,6 @@ _message_filter_cb (DBusConnection *connection,
 
             if (client->callback)
                 client->callback (client, event->event_id, state, client->userdata);
-
-            _signal_set_match (client->connection, 0, NGF_DBUS_SIGNAL_COMPLETED, event->policy_id);
-            _signal_set_match (client->connection, 0, NGF_DBUS_SIGNAL_FAILED, event->policy_id);
 
              LIST_REMOVE (client->active_events, event);
             free (event);
@@ -310,10 +227,6 @@ static void
 _stop_active_event (NgfEvent *event, void *userdata)
 {
     NgfClient *client = (NgfClient*) userdata;
-
-    _signal_set_match (client->connection, 0, NGF_DBUS_SIGNAL_COMPLETED, event->policy_id);
-    _signal_set_match (client->connection, 0, NGF_DBUS_SIGNAL_FAILED, event->policy_id);
-
     _send_stop_event (client->connection, event->policy_id);
 }
 

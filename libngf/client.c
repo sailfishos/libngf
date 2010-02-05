@@ -82,8 +82,13 @@ _send_stop_event (DBusConnection *connection,
     DBusMessageIter sub;
     dbus_uint32_t serial = 0;
 
-    msg = dbus_message_new_method_call (NGF_DBUS_NAME, NGF_DBUS_PATH,
-        NGF_DBUS_IFACE, NGF_DBUS_METHOD_STOP);
+    if ((msg = dbus_message_new_method_call (NGF_DBUS_NAME,
+                                             NGF_DBUS_PATH,
+                                             NGF_DBUS_IFACE,
+                                             NGF_DBUS_METHOD_STOP)) == NULL)
+    {
+        return;
+    }
 
     dbus_message_iter_init_append (msg, &sub);
     dbus_message_iter_append_basic (&sub, DBUS_TYPE_UINT32, &policy_id);
@@ -313,8 +318,13 @@ ngf_client_play_event (NgfClient *client,
 
     /* Send the actual message to the service. */
 
-    msg = dbus_message_new_method_call (NGF_DBUS_NAME, NGF_DBUS_PATH,
-        NGF_DBUS_IFACE, NGF_DBUS_METHOD_PLAY);
+    if ((msg = dbus_message_new_method_call (NGF_DBUS_NAME,
+                                             NGF_DBUS_PATH,
+                                             NGF_DBUS_IFACE,
+                                             NGF_DBUS_METHOD_PLAY)) == NULL)
+    {
+        return 0;
+    }
 
     dbus_message_iter_init_append (msg, &iter);
     dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &event);

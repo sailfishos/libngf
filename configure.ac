@@ -32,9 +32,11 @@ AM_PROG_CC_C_O
 AM_PROG_LIBTOOL
 AM_SANITY_CHECK
 
-PKG_CHECK_MODULES(BASE, dbus-1 dbus-glib-1 glib-2.0)
+PKG_CHECK_MODULES(BASE, dbus-1)
 AC_SUBST(BASE_LIBS)
 AC_SUBST(BASE_CFLAGS)
+
+PKG_CHECK_MODULES(GLIB, glib-2.0 dbus-glib-1)
 
 pkgconfigdir="\$(libdir)/pkgconfig"
 AC_SUBST(pkgconfigdir)

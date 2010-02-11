@@ -1,8 +1,8 @@
 INCLUDES		= -I$(top_srcdir)
 
-bin_PROGRAMS		= test-client
+bin_PROGRAMS		= ngf-client
 
-test_client_SOURCES	= test-client.c
-test_client_CPPFLAGS	= $(BASE_CFLAGS)
-test_client_LDADD	= $(BASE_LIBS) -L../libngf/.libs/ -lngf-1.0
+ngf_client_SOURCES	= ngf-client.c
+ngf_client_CPPFLAGS	= $(BASE_CFLAGS)
+ngf_client_LDADD	= $(BASE_LIBS) -L../libngf/.libs/ -lngf-1.0
 

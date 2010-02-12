@@ -36,7 +36,16 @@ typedef enum _NgfEventState
     NGF_EVENT_COMPLETED = 0,
 
     /** Event fails when we are unable to get resources for it or we just can't play it. */
-    NGF_EVENT_FAILED
+    NGF_EVENT_FAILED    = 1,
+
+    /** Event is busy, because there is a more higher priority event playing. */
+    NGF_EVENT_BUSY      = (1 << 1),
+
+    /** Event will be played using a long tone */
+    NGF_EVENT_LONG      = (1 << 2),
+
+    /** Event will be played using a short tone */
+    NGF_EVENT_SHORT     = (1 << 3),
 } NgfEventState;
 
 /** Internal client structure. */

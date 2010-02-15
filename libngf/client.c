@@ -187,8 +187,10 @@ _message_filter_cb (DBusConnection *connection,
             if (client->callback)
                 client->callback (client, event->event_id, state, client->userdata);
 
-             LIST_REMOVE (client->active_events, event);
-            free (event);
+            if (state == NGF_EVENT_COMPLETED || state == NGF_EVENT_FAILED) {
+                LIST_REMOVE (client->active_events, event);
+                free (event);
+            }
             break;
         }
     }

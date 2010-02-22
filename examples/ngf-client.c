@@ -29,7 +29,7 @@ copy_str (char *str, size_t length)
 
     char *p = (char*) malloc (sizeof (char) * (length + 1));
     if (p == NULL)
-        return;
+        return NULL;
 
     p[length] = '\0';
     strncpy (p, str, length);
@@ -186,7 +186,8 @@ input_cb (GIOChannel *channel, GIOCondition cond, gpointer userdata)
 static void
 client_callback_cb (NgfClient *client, uint32_t event_id, NgfEventState state, void *userdata)
 {
-    TestClient *c = (TestClient*) userdata;
+    (void) client;
+    (void) userdata;
 
     if (state == NGF_EVENT_COMPLETED) {
         g_print ("\nCompleted (event_id=%d)\n", event_id);

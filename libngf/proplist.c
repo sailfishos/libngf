@@ -72,12 +72,6 @@ void ngf_proplist_free (NgfProplist *proplist)
     free (proplist);
 }
 
-static void
-_print_key (PropEntry *entry, void *userdata)
-{
-    fprintf (stdout, "%s: key=%s, value=%s\n", __FUNCTION__, entry->key, entry->value);
-}
-
 void
 ngf_proplist_sets (NgfProplist *proplist,
                    const char *key,
@@ -106,7 +100,7 @@ ngf_proplist_gets (NgfProplist *proplist,
     PropEntry *iter = NULL;
 
     if (proplist == NULL || key == NULL)
-        return;
+        return NULL;
 
     for (iter = proplist->entries; iter; iter = iter->next) {
         if (strncmp (iter->key, key, (size_t) MAX_KEY_LENGTH) == 0)
@@ -138,7 +132,7 @@ ngf_proplist_get_keys (NgfProplist *proplist)
     size_t num_keys = 0, i = 0;
 
     if (proplist == NULL)
-        return;
+        return NULL;
 
     for (iter = proplist->entries; iter; iter = iter->next)
         num_keys++;

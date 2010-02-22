@@ -196,9 +196,6 @@ _message_filter_cb (DBusConnection *connection,
     }
 
     return DBUS_HANDLER_RESULT_HANDLED;
-
-failed:
-    return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 }
 
 NgfClient*
@@ -252,9 +249,6 @@ _free_pending_reply (NgfReply *reply, void *userdata)
 void
 ngf_client_destroy (NgfClient *client)
 {
-    NgfReply *reply = NULL;
-    NgfEvent *event = NULL;
-
     if (client == NULL)
         return;
 
@@ -308,9 +302,8 @@ ngf_client_play_event (NgfClient *client,
     DBusPendingCall *pending = NULL;
     DBusMessage *msg = NULL;
     NgfReply *reply = NULL;
-    const char *key = NULL, *value = NULL;
 
-    DBusMessageIter iter, sub, ssub;
+    DBusMessageIter iter, sub;
     uint32_t event_id = 0;
 
     if (client == NULL || event == NULL)

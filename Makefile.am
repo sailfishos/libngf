@@ -1,5 +1,5 @@
 ACLOCAL_AMFLAGS = -I m4
-SUBDIRS = $(NGF_LIBRARY_NAME) examples
+SUBDIRS = $(NGF_LIBRARY_NAME) examples tests
 
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = libngf-1.0.pc
+pkgconfig_DATA = libngf0.pc

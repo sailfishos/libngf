@@ -37,6 +37,12 @@ AC_SUBST(BASE_LIBS)
 AC_SUBST(BASE_CFLAGS)
 
 PKG_CHECK_MODULES(GLIB, glib-2.0 dbus-glib-1)
+AC_SUBST(GLIB_LIBS)
+AC_SUBST(GLIB_CFLAGS)
+
+PKG_CHECK_MODULES(CHECK, check)
+AC_SUBST(CHECK_LIBS)
+AC_SUBST(CHECK_CFLAGS)
 
 pkgconfigdir="\$(libdir)/pkgconfig"
 AC_SUBST(pkgconfigdir)
@@ -51,4 +57,4 @@ echo "
     CFLAGS:                 ${CFLAGS}
 "
 
-AC_OUTPUT(Makefile libngf-1.0.pc libngf/Makefile examples/Makefile)
+AC_OUTPUT(Makefile libngf0.pc libngf/Makefile examples/Makefile tests/Makefile)

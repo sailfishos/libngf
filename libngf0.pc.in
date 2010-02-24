@@ -7,7 +7,7 @@ toolsdir=${exec_prefix}/bin
 Name: libngf
 Description: non-graphical feedback client library
 Version: 0.1
-Libs: -L${libdir} -lngf-1.0 -lm
+Libs: -L${libdir} -lngf0 -lm
 Cflags: -I${includedir}
 
 

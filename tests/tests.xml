@@ -5,7 +5,7 @@
     <set name="libngf-tests" feature="NGF">
 
       <case name="property-list" type="Functional" level="Component" subfeature="NGF property list" description="Unit tests for libngf" timeout="15">
-        <step expected_result="0">/usr/share/libngf-tests/test-proplist</step>
+        <step expected_result="0">/usr/lib/libngf-tests/test-proplist</step>
       </case>
 
       <environments>

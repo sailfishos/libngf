@@ -18,6 +18,10 @@
 #ifndef NGF_PROPLIST_H
 #define NGF_PROPLIST_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** Internal property list instance. */
 typedef struct  _NgfProplist NgfProplist;
 
@@ -88,5 +92,9 @@ const char**    ngf_proplist_get_keys (NgfProplist *proplist);
  */
 
 void            ngf_proplist_free_keys (const char **keys);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* NGF_PROPLIST_H */

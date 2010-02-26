@@ -42,7 +42,15 @@
 /** Custom event */
 #define NGF_EVENT_CUSTOM        "custom"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <libngf/client.h>
 #include <libngf/proplist.h>
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* LIBNGF_H */

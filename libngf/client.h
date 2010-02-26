@@ -18,6 +18,10 @@
 #ifndef NGF_CLIENT_H
 #define NGF_CLIENT_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 #include <libngf/proplist.h>
 
@@ -131,5 +135,10 @@ uint32_t ngf_client_play_event (NgfClient *client,
 
 void ngf_client_stop_event (NgfClient *client,
                             uint32_t id);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* NGF_CLIENT_H */

@@ -43,7 +43,7 @@ START_TEST (test_limits)
     res = ngf_proplist_gets (proplist, "big.value");
 
     fail_unless (res != NULL);
-    fail_unless (strlen (res) == 256, "Maximum size does not match");
+    fail_unless (strlen (res) == 512, "Maximum size does not match");
 
     free (str_buf);
 

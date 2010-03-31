@@ -22,8 +22,8 @@
 #include "list_p.h"
 #include "proplist.h"
 
-#define MAX_KEY_LENGTH 16
-#define MAX_VALUE_LENGTH 256
+#define MAX_KEY_LENGTH 32
+#define MAX_VALUE_LENGTH 512
 
 typedef struct _PropEntry PropEntry;
 

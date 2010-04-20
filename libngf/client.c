@@ -212,12 +212,11 @@ ngf_client_create (NgfTransport transport,
     memset (c, 0, sizeof (NgfClient));
 
     va_start (transport_args, transport);
-
     c->connection = va_arg (transport_args, DBusConnection*);
+    va_end (transport_args);
+
     if (!c->connection)
         goto failed;
-
-    va_end (transport_args);
 
     dbus_connection_add_filter (c->connection, _message_filter_cb, c, NULL);
     return c;

@@ -126,6 +126,8 @@ parse_command_stop (TestClient *c, char *buf)
     uint32_t id = 0;
 
     advance = get_str (buf, ' ', &str);
+    (void) advance;
+
     if (str == NULL) {
         g_print ("Usage: stop [ID]\n");
         return;
@@ -171,9 +173,8 @@ input_cb (GIOChannel *channel, GIOCondition cond, gpointer userdata)
 
     if (cond == G_IO_IN) {
         bytes_read = read (0, buf, MAX_BUF_SIZE);
-        buf[bytes_read] = '\0';
-
         if (bytes_read > 0) {
+            buf[bytes_read] = '\0';
             parse_input (c, buf, bytes_read);
         }
 

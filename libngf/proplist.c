@@ -51,6 +51,7 @@ ngf_proplist_new ()
         return NULL;
 
     memset (proplist, 0, sizeof (NgfProplist));
+    return proplist;
 }
 
 static void

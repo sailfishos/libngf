@@ -50,6 +50,9 @@ AC_SUBST(pkgconfigdir)
 servicesdir="`pkg-config --variable=session_bus_services_dir dbus-1`"
 AC_SUBST(servicesdir)
 
+CFLAGS="${CFLAGS} -D_GNU_SOURCE"
+AC_SUBST(CFLAGS)
+
 echo "
  == $PACKAGE $VERSION ==
 

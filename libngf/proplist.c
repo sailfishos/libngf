@@ -22,6 +22,10 @@
 #include "list_p.h"
 #include "proplist.h"
 
+#define VALUE_TYPE_STRING "string"
+#define VALUE_TYPE_INTEGER "integer"
+#define VALUE_TYPE_BOOLEAN "boolean"
+
 #define MAX_KEY_LENGTH 32
 #define MAX_VALUE_LENGTH 512
 
@@ -33,6 +37,7 @@ struct _PropEntry
 
     char *key;
     char *value;
+    char *type;
 };
 
 struct _NgfProplist
@@ -87,9 +92,10 @@ ngf_proplist_sets (NgfProplist *proplist,
     if (item == NULL)
         return;
 
-    item->key = strndup (key, (size_t) MAX_KEY_LENGTH);
+    item->key   = strndup (key, (size_t) MAX_KEY_LENGTH);
     item->value = strndup (value, (size_t) MAX_VALUE_LENGTH);
-    item->next = NULL;
+    item->type  = VALUE_TYPE_STRING;
+    item->next  = NULL;
 
     LIST_APPEND (proplist->entries, item);
 }
@@ -111,6 +117,147 @@ ngf_proplist_gets (NgfProplist *proplist,
     return NULL;
 }
 
+static char*
+_string_from_integer (int value)
+{
+    char   *result      = NULL;
+    size_t  result_size = 0;
+
+    char value_buf[MAX_VALUE_LENGTH + 1];
+    memset (&value_buf, 0, sizeof (char) * (MAX_VALUE_LENGTH + 1));
+
+    snprintf (value_buf, MAX_VALUE_LENGTH, "%u", value);
+    result_size = strlen (value_buf);
+
+    if ((result = (char*) malloc (sizeof (char) * (result_size + 1))) == NULL)
+        return NULL;
+
+    strncpy (result, value_buf, result_size);
+    result[result_size] = '\0';
+    return result;
+}
+
+void
+ngf_proplist_set_as_integer (NgfProplist *proplist,
+                             const char *key,
+                             int value)
+{
+    PropEntry *item = NULL;
+
+    if (proplist == NULL || key == NULL)
+        return;
+
+    item = (PropEntry*) malloc (sizeof (PropEntry));
+    if (item == NULL)
+        return;
+
+    item->key   = strndup (key, (size_t) MAX_KEY_LENGTH);
+    item->value = _string_from_integer (value);
+    item->type  = VALUE_TYPE_INTEGER;
+    item->next  = NULL;
+
+    LIST_APPEND (proplist->entries, item);
+}
+
+int
+ngf_proplist_get_as_integer (NgfProplist *proplist,
+                             const char *key)
+{
+    PropEntry *iter = NULL;
+
+    if (proplist == NULL || key == NULL)
+        return 0;
+
+    for (iter = proplist->entries; iter; iter = iter->next) {
+        if (strncmp (iter->key, key, (size_t) MAX_KEY_LENGTH) == 0 && strncmp (iter->type, VALUE_TYPE_INTEGER, 7) == 0)
+            return ngf_proplist_parse_integer (iter->value);
+    }
+
+    return 0;
+}
+
+void
+ngf_proplist_set_as_boolean (NgfProplist *proplist,
+                             const char *key,
+                             int value)
+{
+    PropEntry *item = NULL;
+
+    if (proplist == NULL || key == NULL)
+        return;
+
+    item = (PropEntry*) malloc (sizeof (PropEntry));
+    if (item == NULL)
+        return;
+
+    item->key   = strndup (key, (size_t) MAX_KEY_LENGTH);
+    item->value = strndup (value > 0 ? "TRUE" : "FALSE", 5);
+    item->type  = VALUE_TYPE_BOOLEAN;
+    item->next  = NULL;
+
+    LIST_APPEND (proplist->entries, item);
+}
+
+int
+ngf_proplist_get_as_boolean (NgfProplist *proplist,
+                             const char *key)
+{
+    PropEntry *iter = NULL;
+
+    if (proplist == NULL || key == NULL)
+        return 0;
+
+    for (iter = proplist->entries; iter; iter = iter->next) {
+        if (strncmp (iter->key, key, (size_t) MAX_KEY_LENGTH) == 0 && strncmp (iter->type, VALUE_TYPE_BOOLEAN, 7) == 0)
+            return ngf_proplist_parse_boolean (iter->value);
+    }
+
+    return 0;
+}
+
+const char*
+ngf_proplist_get_value_type (NgfProplist *proplist,
+                             const char *key)
+{
+    PropEntry *iter = NULL;
+
+    if (proplist == NULL || key == NULL)
+        return NULL;
+
+    for (iter = proplist->entries; iter; iter = iter->next) {
+        if (strncmp (iter->key, key, (size_t) MAX_KEY_LENGTH) == 0)
+            return (const char*) iter->type;
+    }
+
+    return NULL;
+}
+
+int
+ngf_proplist_parse_integer (const char *value)
+{
+    int result = 0;
+
+    if (value == NULL)
+        return 0;
+
+    result = strtol (value, NULL, 10);
+    return result;
+}
+
+int
+ngf_proplist_parse_boolean (const char *value)
+{
+    if (value == NULL)
+        return 0;
+
+    if (strncmp (value, "TRUE", 4) == 0 ||
+        strncmp (value, "true", 4) == 0 ||
+        strncmp (value, "True", 4) == 0)
+        return 1;
+
+    return 0;
+}
+
 void
 ngf_proplist_foreach (NgfProplist *proplist,
                       NgfProplistCallback callback,
@@ -123,6 +270,20 @@ ngf_proplist_foreach (NgfProplist *proplist,
 
     for (iter = proplist->entries; iter; iter = iter->next)
         callback (iter->key, iter->value, userdata);
+}
+
+void
+ngf_proplist_foreach_extended (NgfProplist *proplist,
+                               NgfProplistExtendedCallback callback,
+                               void *userdata)
+{
+    PropEntry *iter = NULL;
+
+    if (proplist == NULL || callback == NULL)
+        return;
+
+    for (iter = proplist->entries; iter; iter = iter->next)
+        callback (iter->key, iter->value, iter->type, userdata);
 }
 
 const char**

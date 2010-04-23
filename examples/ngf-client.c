@@ -81,7 +81,7 @@ static void
 parse_command_play (TestClient *c, char *buf)
 {
     char *advance = buf;
-    char *event_id = NULL, *key = NULL, *value = NULL;
+    char *event_id = NULL, *key = NULL, *value = NULL, *ptr = NULL, *type = NULL;
     NgfProplist *p = NULL;
 
     /* First parameter is the event */
@@ -105,7 +105,31 @@ parse_command_play (TestClient *c, char *buf)
             break;
         }
 
-        ngf_proplist_sets (p, key, value);
+        /* Parse the value, it may contain optional type within parenthesis. */
+
+        g_print ("key=%s, value=%s\n", key, value);
+
+        if (value[0] == '(') {
+            ptr = get_str ((value + 1), ')', &type);
+            g_print ("type=%s, ptr=%s\n", type, ptr);
+
+            if (strncmp (type, "string", 6) == 0) {
+                ngf_proplist_sets (p, key, ptr);
+            }
+            else if (strncmp (type, "integer", 7) == 0) {
+                ngf_proplist_set_as_integer (p, key, ngf_proplist_parse_integer (ptr));
+                g_print ("integer -> %d\n", ngf_proplist_get_as_integer (p, key));
+            }
+            else if (strncmp (type, "boolean", 7) == 0) {
+                ngf_proplist_set_as_boolean (p, key, ngf_proplist_parse_boolean (ptr));
+                g_print ("boolean -> %s\n", ngf_proplist_get_as_boolean (p, key) ? "TRUE" : "FALSE");
+            }
+
+            free (type);
+        }
+        else {
+            ngf_proplist_sets (p, key, value);
+        }
 
         free (key);
         free (value);

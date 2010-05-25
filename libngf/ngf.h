@@ -39,6 +39,9 @@
 /** Email event */
 #define NGF_EVENT_EMAIL         "email"
 
+/** Missed call event */
+#define NGF_EVENT_MISSEDCALL    "missedcall"
+
 /** Custom event */
 #define NGF_EVENT_CUSTOM        "custom"
 

@@ -1,0 +1,9 @@
+subsystem: NGF
+interface: libngf
+type: library
+scope: Internal
+state: unstable
+headers: client.h
+libs-pkg: libngf0
+dev-pkg: libngf-dev
+doc: libngf-doc

@@ -261,7 +261,7 @@ application_create (TestClient *c)
 
     /* Setup DBus and client */
 
-    c->connection = dbus_bus_get (DBUS_BUS_SESSION, NULL);
+    c->connection = dbus_bus_get (DBUS_BUS_SYSTEM, NULL);
     dbus_connection_setup_with_g_main (c->connection, NULL);
 
     if ((c->client = ngf_client_create (NGF_TRANSPORT_DBUS, c->connection)) == NULL)

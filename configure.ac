@@ -44,6 +44,19 @@ PKG_CHECK_MODULES(CHECK, check)
 AC_SUBST(CHECK_LIBS)
 AC_SUBST(CHECK_CFLAGS)
 
+AC_ARG_ENABLE([coverage],
+	AS_HELP_STRING([--enable-coverage],[Enable coverage @<:@default=false@:>@]),
+	[case "${enableval}" in
+		yes) coverage=true ; CHECK_CFLAGS="${CHECK_CFLAGS} -fprofile-arcs -ftest-coverage" ; CHECK_LIBS="${CHECK_LIBS} -lgcov" ;;
+		no)  coverage=false ;;
+		*) AC_MSG_ERROR([bad value ${enableval} for --enable-coverage]) ;;
+	esac],
+	[coverage=false])
+AM_CONDITIONAL([COVERAGE], [test x$coverage = xtrue])
+
+AC_SUBST(CHECK_LIBS)
+AC_SUBST(CHECK_CFLAGS)
+
 pkgconfigdir="\$(libdir)/pkgconfig"
 AC_SUBST(pkgconfigdir)
 
@@ -58,6 +71,7 @@ echo "
 
     Compiler:               ${CC}
     CFLAGS:                 ${CFLAGS}
+    Code coverage:          ${coverage}
 "
 
 AC_OUTPUT(Makefile libngf0.pc libngf/Makefile examples/Makefile tests/Makefile)

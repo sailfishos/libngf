@@ -3,7 +3,7 @@ interface: libngf
 type: library
 scope: Internal
 state: unstable
-headers: client.h
+headers: /usr/include/libngf-1.0/libngf/*
 libs-pkg: libngf0
 dev-pkg: libngf-dev
 doc: libngf-doc

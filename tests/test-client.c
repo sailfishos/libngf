@@ -5,14 +5,12 @@
 #include <dbus/dbus-glib-lowlevel.h>
 
 #include <libngf/client.h>
-//#include <libngf/proplist.h>
-
 
 START_TEST (test_create_client)
 {
 	NgfClient *client = NULL;
 	DBusConnection *connection = NULL;
-	connection = dbus_bus_get (DBUS_BUS_SESSION, NULL);
+	connection = dbus_bus_get (DBUS_BUS_SYSTEM, NULL);
 	dbus_connection_setup_with_g_main (connection, NULL);
 
 	client = ngf_client_create (NGF_TRANSPORT_DBUS, connection);
@@ -36,7 +34,7 @@ START_TEST (test_play_event_NULL)
 {
 	NgfClient *client = NULL;
 	DBusConnection *connection = NULL;
-	connection = dbus_bus_get (DBUS_BUS_SESSION, NULL);
+	connection = dbus_bus_get (DBUS_BUS_SYSTEM, NULL);
 	dbus_connection_setup_with_g_main (connection, NULL);
 
 	client = ngf_client_create (NGF_TRANSPORT_DBUS, connection);
@@ -67,7 +65,7 @@ START_TEST (test_play)
 {
 	NgfClient *client = NULL;
 	DBusConnection *connection = NULL;
-	connection = dbus_bus_get (DBUS_BUS_SESSION, NULL);
+	connection = dbus_bus_get (DBUS_BUS_SYSTEM, NULL);
 	dbus_connection_setup_with_g_main (connection, NULL);
 
 	client = ngf_client_create (NGF_TRANSPORT_DBUS, connection);

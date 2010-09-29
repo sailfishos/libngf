@@ -130,10 +130,19 @@ _pending_play_reply (DBusPendingCall *pending,
     if (reply == NULL)
         goto done;
 
+    event = (NgfEvent*) malloc (sizeof (NgfEvent));
+    memset (event, 0, sizeof (NgfEvent));
+    event->event_id = reply->event_id;
+
     msg = dbus_pending_call_steal_reply (pending);
     dbus_message_iter_init (msg, &iter);
-    if (dbus_message_iter_get_arg_type (&iter) != DBUS_TYPE_UINT32)
+    if (dbus_message_iter_get_arg_type (&iter) != DBUS_TYPE_UINT32) {
+        if (client->callback)
+            client->callback (client, event->event_id, NGF_EVENT_FAILED, client->userdata);
+        free (event);
+
         goto done;
+    }
 
     dbus_message_iter_get_basic (&iter, &policy_id);
 
@@ -143,13 +152,14 @@ _pending_play_reply (DBusPendingCall *pending,
             goto done;
         }
 
-        event = (NgfEvent*) malloc (sizeof (NgfEvent));
-        memset (event, 0, sizeof (NgfEvent));
-
-        event->event_id = reply->event_id;
         event->policy_id = policy_id;
 
         LIST_APPEND (client->active_events, event);
+    } else {
+        if (client->callback)
+            client->callback (client, event->event_id, NGF_EVENT_FAILED, client->userdata);
+        free (event);
+        goto done;
     }
 
 done:

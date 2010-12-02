@@ -35,6 +35,8 @@ START_TEST (test_create_client)
 
 	client = ngf_client_create (NGF_TRANSPORT_DBUS, connection);
 	fail_unless (client != NULL);
+	ngf_client_destroy (client);
+	dbus_connection_unref (connection);
 
 }
 END_TEST
@@ -65,7 +67,9 @@ START_TEST (test_play_event_NULL)
 	p  = ngf_proplist_new ();
 	uint32_t id = ngf_client_play_event (client, event_id, p);
 	fail_unless (id == 0);
-
+	ngf_proplist_free (p);
+	ngf_client_destroy (client);
+	dbus_connection_unref (connection);
 }
 END_TEST
 
@@ -77,7 +81,8 @@ START_TEST (test_play_client_NULL)
 	p  = ngf_proplist_new ();
 	uint32_t id = ngf_client_play_event (client, event_id, p);
 	fail_unless (id == 0);
-
+	ngf_proplist_free (p);
+	ngf_client_destroy (client);
 }
 END_TEST
 
@@ -96,6 +101,9 @@ START_TEST (test_play)
 	p  = ngf_proplist_new ();
 	uint32_t id = ngf_client_play_event (client, event_id, p);
 	fail_unless (id != 0);
+	ngf_proplist_free (p);
+	ngf_client_destroy (client);
+	dbus_connection_unref (connection);
 }
 END_TEST
 
@@ -109,6 +117,7 @@ START_TEST (test_callback)
 	fail_unless (id == 0);
 
 //	ngf_client_set_callback(NULL, NULL, NULL);
+	ngf_proplist_free (p);
 	ngf_client_destroy(NULL);
 //	fail_unless (client->callback == NULL);
 }

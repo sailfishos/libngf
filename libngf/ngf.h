@@ -24,9 +24,6 @@
 /** Ringtone event */
 #define NGF_EVENT_RINGTONE      "ringtone"
 
-/** Video call */
-#define NGF_EVENT_VIDEO_CALL    "video_call"
-
 /** Clock alarm */
 #define NGF_EVENT_CLOCK         "clock"
 
@@ -41,12 +38,6 @@
 
 /** Email event */
 #define NGF_EVENT_EMAIL         "email"
-
-/** Missed call event */
-#define NGF_EVENT_MISSEDCALL    "missedcall"
-
-/** Custom event */
-#define NGF_EVENT_CUSTOM        "custom"
 
 #ifdef __cplusplus
 extern "C" {

@@ -146,6 +146,8 @@ _pending_play_reply (DBusPendingCall *pending,
     if (policy_id > 0) {
         if (reply->stop_set) {
             _send_stop_event (client->connection, policy_id);
+            free (event);
+
             goto done;
         }
 

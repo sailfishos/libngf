@@ -130,7 +130,7 @@ uint32_t ngf_client_play_event (NgfClient *client,
                                 NgfProplist *proplist);
 
 /**
- * Stop a currently active event.
+ * Stop an active event.
  *
  * @param client NgfClient instance
  * @param id Event id. If no such event, nothing is done.
@@ -139,6 +139,25 @@ uint32_t ngf_client_play_event (NgfClient *client,
 void ngf_client_stop_event (NgfClient *client,
                             uint32_t id);
 
+/**
+ * Pause active event.
+ *
+ * @param client NgfClient instance
+ * @param id Event id.
+ */
+
+void ngf_client_pause_event (NgfClient *client,
+                             uint32_t id);
+
+/**
+ * Resume paused event.
+ *
+ * @param client NgfClient instance
+ * @param id Event id.
+ */
+
+void ngf_client_resume_event (NgfClient *client,
+                              uint32_t id);
 
 #ifdef __cplusplus
 }

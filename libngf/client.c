@@ -42,6 +42,9 @@
 /** DBus method for stopping event */
 #define NGF_DBUS_METHOD_STOP        "Stop"
 
+/** DBus method for pausing/resuming event */
+#define NGF_DBUS_METHOD_PAUSE       "Pause"
+
 /** DBus method call that is sent to us when the event state changes */
 #define NGF_DBUS_INTERNAL_STATUS    "Status"
 
@@ -460,3 +463,70 @@ ngf_client_stop_event (NgfClient *client,
         reply = reply->next;
     }
 }
+
+static void
+_pause_active_event (NgfClient *client,
+                     NgfEvent *event,
+                     int pause)
+{
+    DBusMessage *msg = NULL;
+    DBusMessageIter iter;
+
+    if ((msg = dbus_message_new_method_call (NGF_DBUS_NAME,
+                                             NGF_DBUS_PATH,
+                                             NGF_DBUS_IFACE,
+                                             NGF_DBUS_METHOD_PAUSE)) == NULL)
+    {
+        return;
+    }
+
+    dbus_message_iter_init_append (msg, &iter);
+    dbus_message_iter_append_basic (&iter, DBUS_TYPE_UINT32, &event->policy_id);
+    dbus_message_iter_append_basic (&iter, DBUS_TYPE_BOOLEAN, &pause);
+
+    dbus_connection_send (client->connection, msg, NULL);
+    dbus_message_unref (msg);
+}
+
+void
+ngf_client_pause_event (NgfClient *client,
+                        uint32_t id)
+{
+    NgfEvent *event = NULL;
+    NgfReply *reply = NULL;
+
+    if (client == NULL)
+        return;
+
+    event = client->active_events;
+    while (event) {
+        if (event->event_id == id) {
+            _pause_active_event (client, event, 1);
+            break;
+        }
+
+        event = event->next;
+    }
+}
+
+void
+ngf_client_resume_event (NgfClient *client,
+                         uint32_t id)
+{
+    NgfEvent *event = NULL;
+    NgfReply *reply = NULL;
+
+    if (client == NULL)
+        return;
+
+    event = client->active_events;
+    while (event) {
+        if (event->event_id == id) {
+            _pause_active_event (client, event, 0);
+            break;
+        }
+
+        event = event->next;
+    }
+}
+

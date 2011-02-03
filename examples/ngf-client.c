@@ -165,6 +165,50 @@ parse_command_stop (TestClient *c, char *buf)
 }
 
 static void
+parse_command_pause (TestClient *c, char *buf)
+{
+    char *advance = buf;
+    char *str = NULL;
+    uint32_t id = 0;
+
+    advance = get_str (buf, ' ', &str);
+    (void) advance;
+
+    if (str == NULL) {
+        g_print ("Usage: pause [ID]\n");
+        return;
+    }
+
+    id = atoi (str);
+    free (str);
+
+    ngf_client_pause_event (c->client, id);
+    g_print ("PAUSE (id=%d)\n", id);
+}
+
+static void
+parse_command_resume (TestClient *c, char *buf)
+{
+    char *advance = buf;
+    char *str = NULL;
+    uint32_t id = 0;
+
+    advance = get_str (buf, ' ', &str);
+    (void) advance;
+
+    if (str == NULL) {
+        g_print ("Usage: resume [ID]\n");
+        return;
+    }
+
+    id = atoi (str);
+    free (str);
+
+    ngf_client_resume_event (c->client, id);
+    g_print ("RESUME (id=%d)\n", id);
+}
+
+static void
 parse_input (TestClient *c, char *buf, size_t max_bytes)
 {
     char *advance = buf;
@@ -178,6 +222,10 @@ parse_input (TestClient *c, char *buf, size_t max_bytes)
         parse_command_play (c, advance);
     else if (strncmp (str, "stop", 4) == 0)
         parse_command_stop (c, advance);
+    else if (strncmp (str, "pause", 5) == 0)
+        parse_command_pause (c, advance);
+    else if (strncmp (str, "resume", 6) == 0)
+        parse_command_resume (c, advance);
     else if (strncmp (str, "quit", 4) == 0)
         g_main_loop_quit (c->loop);
     else

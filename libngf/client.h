@@ -52,7 +52,7 @@ typedef enum _NgfEventState
     NGF_EVENT_LONG      = (1 << 2),
 
     /** Event will be played using a short tone */
-    NGF_EVENT_SHORT     = (1 << 3),
+    NGF_EVENT_SHORT     = (1 << 3)
 } NgfEventState;
 
 /** Internal client structure. */

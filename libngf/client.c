@@ -264,6 +264,12 @@ _free_active_event (NgfEvent *event, void *userdata)
 static void
 _free_pending_reply (NgfReply *reply, void *userdata)
 {
+    if (reply->pending) {
+        dbus_pending_call_cancel (reply->pending);
+        dbus_pending_call_unref (reply->pending);
+        reply->pending = NULL;
+    }
+
     free (reply);
 }
 

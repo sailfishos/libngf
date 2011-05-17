@@ -165,6 +165,9 @@ _pending_play_reply (DBusPendingCall *pending,
     }
 
 done:
+    if (msg)
+	 dbus_message_unref (msg);
+    
     if (reply) {
         LIST_REMOVE (client->pending_replies, reply);
         free (reply);

@@ -25,6 +25,8 @@
 extern "C" {
 #endif
 
+#include <stdint.h>
+
 /** Internal property list instance. */
 typedef struct  _NgfProplist NgfProplist;
 
@@ -73,16 +75,36 @@ const char*     ngf_proplist_gets (NgfProplist *proplist, const char *key);
  * @param value Value for the key
  */
 
-void            ngf_proplist_set_as_integer (NgfProplist *proplist, const char *key, int value);
+void            ngf_proplist_set_as_integer (NgfProplist *proplist, const char *key, int32_t value);
 
 /**
  * Get integer value from the property list.
  * @param proplist NgfProplist
  * @param key Key name
- * @return value Value for the key or 0 if failed.
+ * @param integer_value Value for the key if key exists in proplist
+ * @return success Return 1 if getting value was successful, 0 if failed.
  */
 
-int             ngf_proplist_get_as_integer (NgfProplist *proplist, const char *key);
+int             ngf_proplist_get_as_integer (NgfProplist *proplist, const char *key, int32_t *integer_value);
+
+/**
+ * Set a unsigned integer value to property list.
+ * @param proplist NgfProplist
+ * @param key Key name
+ * @param value Value for the key
+ */
+
+void            ngf_proplist_set_as_unsigned (NgfProplist *proplist, const char *key, uint32_t value);
+
+/**
+ * Get unsigned integer value from the property list.
+ * @param proplist NgfProplist
+ * @param key Key name
+ * @param unsigned_value Value for the key if key exists in proplist
+ * @return success Return 1 if getting value was successful, 0 if failed.
+ */
+
+int             ngf_proplist_get_as_unsigned (NgfProplist *proplist, const char *key, uint32_t *unsigned_value);
 
 /**
  * Set a boolean value to property list.
@@ -97,10 +119,11 @@ void            ngf_proplist_set_as_boolean (NgfProplist *proplist, const char *
  * Get a boolean value from the property list.
  * @param proplist NgfProplist
  * @param key Key name
- * @return 1 for TRUE, 0 for FALSE or failed.
+ * @param boolean_value 1 for TRUE, 0 for FALSE.
+ * @return success Return 1 if getting value was successful, 0 if failed.
  */
 
-int             ngf_proplist_get_as_boolean (NgfProplist *proplist, const char *key);
+int             ngf_proplist_get_as_boolean (NgfProplist *proplist, const char *key, int *boolean_value);
 
 /**
  * Get value type of the property.
@@ -114,18 +137,29 @@ const char*     ngf_proplist_get_value_type (NgfProplist *proplist, const char *
 /**
  * Parse integer value.
  * @param value Value to parse.
- * @return Integer or 0 if unable to parse.
+ * @param integer_value Parsed integer value.
+ * @return 1 on success, 0 if failed to parse.
  */
 
-int             ngf_proplist_parse_integer (const char *value);
+int             ngf_proplist_parse_integer (const char *value, int32_t *integer_value);
+
+/**
+ * Parse unsigned integer value.
+ * @param value Value to parse.
+ * @param integer_value Parsed integer value.
+ * @return 1 on success, 0 if failed to parse.
+ */
+
+int             ngf_proplist_parse_unsigned (const char *value, uint32_t *unsigned_value);
 
 /**
  * Parse boolean value.
  * @param value Value to parse.
- * @return 1 for TRUE, 0 for FALSE or unable to parse.
+ * @param boolean_value Parsed boolean value, 1 for TRUE 0 for FALSE.
+ * @return 1 on success, 0 if failed to parse.
  */
 
-int             ngf_proplist_parse_boolean (const char *value);
+int             ngf_proplist_parse_boolean (const char *value, int *boolean_value);
 
 /**
  * Iterate over each entry in the property list.

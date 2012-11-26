@@ -53,6 +53,7 @@ enum ValueType
     VALUE_TYPE_UNKNOWN = 0,
     VALUE_TYPE_STRING,
     VALUE_TYPE_INTEGER,
+    VALUE_TYPE_UNSIGNED,
     VALUE_TYPE_BOOLEAN
 };
 
@@ -321,6 +322,9 @@ _parse_value_type (const char *type)
     else if (strncmp (type, "integer", 7) == 0)
         return VALUE_TYPE_INTEGER;
 
+    else if (strncmp (type, "unsigned", 8) == 0)
+        return VALUE_TYPE_UNSIGNED;
+
     else if (strncmp (type, "boolean", 7) == 0)
         return VALUE_TYPE_BOOLEAN;
 
@@ -335,7 +339,8 @@ _append_property (const char *key,
 {
     DBusMessageIter *iter       = (DBusMessageIter*) userdata;
     int              value_type = VALUE_TYPE_UNKNOWN;
-    int              number     = 0;
+    int32_t          integer_value = 0;
+    uint32_t         unsigned_value = 0;
 
     DBusMessageIter sub, ssub;
 
@@ -353,16 +358,23 @@ _append_property (const char *key,
             break;
 
         case VALUE_TYPE_INTEGER:
-            number = ngf_proplist_parse_integer (value);
+            ngf_proplist_parse_integer (value, &integer_value);
             dbus_message_iter_open_container (&sub, DBUS_TYPE_VARIANT, DBUS_TYPE_INT32_AS_STRING, &ssub);
-            dbus_message_iter_append_basic (&ssub, DBUS_TYPE_INT32, &number);
+            dbus_message_iter_append_basic (&ssub, DBUS_TYPE_INT32, &integer_value);
+            dbus_message_iter_close_container (&sub, &ssub);
+            break;
+
+        case VALUE_TYPE_UNSIGNED:
+            ngf_proplist_parse_unsigned (value, &unsigned_value);
+            dbus_message_iter_open_container (&sub, DBUS_TYPE_VARIANT, DBUS_TYPE_UINT32_AS_STRING, &ssub);
+            dbus_message_iter_append_basic (&ssub, DBUS_TYPE_UINT32, &unsigned_value);
             dbus_message_iter_close_container (&sub, &ssub);
             break;
 
         case VALUE_TYPE_BOOLEAN:
-            number = ngf_proplist_parse_boolean (value);
+            ngf_proplist_parse_boolean (value, &integer_value);
             dbus_message_iter_open_container (&sub, DBUS_TYPE_VARIANT, DBUS_TYPE_BOOLEAN_AS_STRING, &ssub);
-            dbus_message_iter_append_basic (&ssub, DBUS_TYPE_BOOLEAN, &number);
+            dbus_message_iter_append_basic (&ssub, DBUS_TYPE_BOOLEAN, &integer_value);
             dbus_message_iter_close_container (&sub, &ssub);
             break;
 

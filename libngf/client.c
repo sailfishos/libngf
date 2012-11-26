@@ -28,7 +28,7 @@
 #include "client.h"
 
 /** DBus name for NGF */
-#define NGF_DBUS_NAME               "com.nokia.NonGraphicFeedback1"
+#define NGF_DBUS_NAME               "com.nokia.NonGraphicFeedback1.Backend"
 
 /** DBus path for NGF */
 #define NGF_DBUS_PATH               "/com/nokia/NonGraphicFeedback1"

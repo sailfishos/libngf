@@ -117,12 +117,25 @@ parse_command_play (TestClient *c, char *buf)
                 ngf_proplist_sets (p, key, ptr);
             }
             else if (strncmp (type, "integer", 7) == 0) {
-                ngf_proplist_set_as_integer (p, key, ngf_proplist_parse_integer (ptr));
-                g_print ("integer -> %d\n", ngf_proplist_get_as_integer (p, key));
+                int value;
+                if (ngf_proplist_parse_integer (ptr, &value)) {
+                    ngf_proplist_set_as_integer (p, key, value);
+                    g_print ("integer -> %d\n", value);
+                }
+            }
+            else if (strncmp (type, "unsigned", 8) == 0) {
+                uint32_t value;
+                if (ngf_proplist_parse_unsigned (ptr, &value)) {
+                    ngf_proplist_set_as_unsigned (p, key, value);
+                    g_print ("unsigned -> %u\n", value);
+                }
             }
             else if (strncmp (type, "boolean", 7) == 0) {
-                ngf_proplist_set_as_boolean (p, key, ngf_proplist_parse_boolean (ptr));
-                g_print ("boolean -> %s\n", ngf_proplist_get_as_boolean (p, key) ? "TRUE" : "FALSE");
+                int value;
+                if (ngf_proplist_parse_boolean (ptr, &value)) {
+                    ngf_proplist_set_as_boolean (p, key, value);
+                    g_print ("boolean -> %s\n", value ? "TRUE" : "FALSE");
+                }
             }
 
             free (type);

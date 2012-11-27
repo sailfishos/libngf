@@ -27,14 +27,22 @@ extern "C" {
 
 #include <stdint.h>
 
+typedef enum _NgfProplistType {
+    NGF_PROPLIST_VALUE_TYPE_STRING = 0,
+    NGF_PROPLIST_VALUE_TYPE_INTEGER,
+    NGF_PROPLIST_VALUE_TYPE_UNSIGNED,
+    NGF_PROPLIST_VALUE_TYPE_BOOLEAN,
+    NGF_PROPLIST_VALUE_TYPE_INVALID
+} NgfProplistType;
+
 /** Internal property list instance. */
 typedef struct  _NgfProplist NgfProplist;
 
 /** Property list callback for iterating over each entry. */
-typedef void    (*NgfProplistCallback) (const char *key, const char *value, void *userdata);
+typedef void    (*NgfProplistCallback) (const char *key, const void *value, void *userdata);
 
 /** Extended iteration callback with type information. */
-typedef void    (*NgfProplistExtendedCallback) (const char *key, const char *value, const char *type, void *userdata);
+typedef void    (*NgfProplistExtendedCallback) (const char *key, const void *value, NgfProplistType type, void *userdata);
 
 /**
  * Create a new property list instance.
@@ -132,7 +140,7 @@ int             ngf_proplist_get_as_boolean (NgfProplist *proplist, const char *
  * @return Value type or NULL if no such key.
  */
 
-const char*     ngf_proplist_get_value_type (NgfProplist *proplist, const char *key);
+NgfProplistType  ngf_proplist_get_value_type (NgfProplist *proplist, const char *key);
 
 /**
  * Parse integer value.

@@ -127,26 +127,6 @@ ngf_proplist_gets (NgfProplist *proplist,
     return NULL;
 }
 
-static char*
-_string_from_integer (int value)
-{
-    char   *result      = NULL;
-    size_t  result_size = 0;
-
-    char value_buf[MAX_VALUE_LENGTH + 1];
-    memset (&value_buf, 0, sizeof (char) * (MAX_VALUE_LENGTH + 1));
-
-    snprintf (value_buf, MAX_VALUE_LENGTH, "%d", value);
-    result_size = strlen (value_buf);
-
-    if ((result = (char*) malloc (sizeof (char) * (result_size + 1))) == NULL)
-        return NULL;
-
-    strncpy (result, value_buf, result_size);
-    result[result_size] = '\0';
-    return result;
-}
-
 void
 ngf_proplist_set_as_integer (NgfProplist *proplist,
                              const char *key,
@@ -170,26 +150,6 @@ ngf_proplist_set_as_integer (NgfProplist *proplist,
     item->next  = NULL;
 
     LIST_APPEND (proplist->entries, item);
-}
-
-static char*
-_string_from_unsigned (uint32_t value)
-{
-    char   *result      = NULL;
-    size_t  result_size = 0;
-
-    char value_buf[MAX_VALUE_LENGTH + 1];
-    memset (&value_buf, 0, sizeof (char) * (MAX_VALUE_LENGTH + 1));
-
-    snprintf (value_buf, MAX_VALUE_LENGTH, "%u", value);
-    result_size = strlen (value_buf);
-
-    if ((result = (char*) malloc (sizeof (char) * (result_size + 1))) == NULL)
-        return NULL;
-
-    strncpy (result, value_buf, result_size);
-    result[result_size] = '\0';
-    return result;
 }
 
 void

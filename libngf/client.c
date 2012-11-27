@@ -48,15 +48,6 @@
 /** DBus method call that is sent to us when the event state changes */
 #define NGF_DBUS_INTERNAL_STATUS    "Status"
 
-enum ValueType
-{
-    VALUE_TYPE_UNKNOWN = 0,
-    VALUE_TYPE_STRING,
-    VALUE_TYPE_INTEGER,
-    VALUE_TYPE_UNSIGNED,
-    VALUE_TYPE_BOOLEAN
-};
-
 typedef struct _NgfReply NgfReply;
 typedef struct _NgfEvent NgfEvent;
 
@@ -310,71 +301,49 @@ ngf_client_set_callback (NgfClient *client,
     client->userdata = userdata;
 }
 
-static int
-_parse_value_type (const char *type)
-{
-    if (type == NULL)
-        return VALUE_TYPE_UNKNOWN;
-
-    if (strncmp (type, "string", 6) == 0)
-        return VALUE_TYPE_STRING;
-
-    else if (strncmp (type, "integer", 7) == 0)
-        return VALUE_TYPE_INTEGER;
-
-    else if (strncmp (type, "unsigned", 8) == 0)
-        return VALUE_TYPE_UNSIGNED;
-
-    else if (strncmp (type, "boolean", 7) == 0)
-        return VALUE_TYPE_BOOLEAN;
-
-    return VALUE_TYPE_UNKNOWN;
-}
-
 static void
 _append_property (const char *key,
-                  const char *value,
-                  const char *type,
+                  const void *value,
+                  NgfProplistType type,
                   void *userdata)
 {
     DBusMessageIter *iter       = (DBusMessageIter*) userdata;
-    int              value_type = VALUE_TYPE_UNKNOWN;
+    const char*      string_value = NULL;
+    int              boolean_value = 0;
     int32_t          integer_value = 0;
     uint32_t         unsigned_value = 0;
 
     DBusMessageIter sub, ssub;
 
-    if ((value_type = _parse_value_type (type)) == VALUE_TYPE_UNKNOWN)
-        return;
-
     dbus_message_iter_open_container (iter, DBUS_TYPE_DICT_ENTRY, 0, &sub);
     dbus_message_iter_append_basic (&sub, DBUS_TYPE_STRING, &key);
 
-    switch (_parse_value_type (type)) {
-        case VALUE_TYPE_STRING:
+    switch (type) {
+        case NGF_PROPLIST_VALUE_TYPE_STRING:
+            string_value = (const char*) value;
             dbus_message_iter_open_container (&sub, DBUS_TYPE_VARIANT, DBUS_TYPE_STRING_AS_STRING, &ssub);
-            dbus_message_iter_append_basic (&ssub, DBUS_TYPE_STRING, &value);
+            dbus_message_iter_append_basic (&ssub, DBUS_TYPE_STRING, &string_value);
             dbus_message_iter_close_container (&sub, &ssub);
             break;
 
-        case VALUE_TYPE_INTEGER:
-            ngf_proplist_parse_integer (value, &integer_value);
+        case NGF_PROPLIST_VALUE_TYPE_INTEGER:
+            integer_value = *(int32_t*) value;
             dbus_message_iter_open_container (&sub, DBUS_TYPE_VARIANT, DBUS_TYPE_INT32_AS_STRING, &ssub);
             dbus_message_iter_append_basic (&ssub, DBUS_TYPE_INT32, &integer_value);
             dbus_message_iter_close_container (&sub, &ssub);
             break;
 
-        case VALUE_TYPE_UNSIGNED:
-            ngf_proplist_parse_unsigned (value, &unsigned_value);
+        case NGF_PROPLIST_VALUE_TYPE_UNSIGNED:
+            unsigned_value = *(uint32_t*) value;
             dbus_message_iter_open_container (&sub, DBUS_TYPE_VARIANT, DBUS_TYPE_UINT32_AS_STRING, &ssub);
             dbus_message_iter_append_basic (&ssub, DBUS_TYPE_UINT32, &unsigned_value);
             dbus_message_iter_close_container (&sub, &ssub);
             break;
 
-        case VALUE_TYPE_BOOLEAN:
-            ngf_proplist_parse_boolean (value, &integer_value);
+        case NGF_PROPLIST_VALUE_TYPE_BOOLEAN:
+            boolean_value = *(int*) value;
             dbus_message_iter_open_container (&sub, DBUS_TYPE_VARIANT, DBUS_TYPE_BOOLEAN_AS_STRING, &ssub);
-            dbus_message_iter_append_basic (&ssub, DBUS_TYPE_BOOLEAN, &integer_value);
+            dbus_message_iter_append_basic (&ssub, DBUS_TYPE_BOOLEAN, &boolean_value);
             dbus_message_iter_close_container (&sub, &ssub);
             break;
 

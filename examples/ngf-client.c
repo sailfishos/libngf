@@ -117,7 +117,7 @@ parse_command_play (TestClient *c, char *buf)
                 ngf_proplist_sets (p, key, ptr);
             }
             else if (strncmp (type, "integer", 7) == 0) {
-                int value;
+                int32_t value;
                 if (ngf_proplist_parse_integer (ptr, &value)) {
                     ngf_proplist_set_as_integer (p, key, value);
                     g_print ("integer -> %d\n", value);

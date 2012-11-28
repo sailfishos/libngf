@@ -1,9 +1,0 @@
-subsystem: NGF
-interface: libngf
-type: library
-scope: Internal
-state: unstable
-headers: /usr/include/libngf-1.0/libngf/*
-libs-pkg: libngf0
-dev-pkg: libngf-dev
-doc: libngf-doc

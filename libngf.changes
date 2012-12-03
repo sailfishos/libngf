@@ -1,2 +1,0 @@
-* Tue Aug 31 2010 Harri Mahonen <ext-harri.mahonen@nokia.com> 0.13
-- Fixes: NB#188562 - autoconf and automake to build-deps

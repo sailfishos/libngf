@@ -39,20 +39,26 @@ typedef enum _NgfTransport
 
 typedef enum _NgfEventState
 {
-    /** Event is completed when the event has been played or cancelled by higher priority event. */
-    NGF_EVENT_COMPLETED = 0,
-
     /** Event fails when we are unable to get resources for it or we just can't play it. */
-    NGF_EVENT_FAILED    = 1,
+    NGF_EVENT_FAILED    = 0,
+
+    /** Event is completed when the event has been played or cancelled by higher priority event. */
+    NGF_EVENT_COMPLETED = 1,
+
+    /** Event is in playing state when playback is successfully started or continued. */
+    NGF_EVENT_PLAYING   = 2,
+
+    /** Event is in paused state when pause is called. */
+    NGF_EVENT_PAUSED    = 3,
 
     /** Event is busy, because there is a more higher priority event playing. */
-    NGF_EVENT_BUSY      = (1 << 1),
+    NGF_EVENT_BUSY      = (1 << 2),
 
     /** Event will be played using a long tone */
-    NGF_EVENT_LONG      = (1 << 2),
+    NGF_EVENT_LONG      = (1 << 3),
 
     /** Event will be played using a short tone */
-    NGF_EVENT_SHORT     = (1 << 3)
+    NGF_EVENT_SHORT     = (1 << 4)
 } NgfEventState;
 
 /** Internal client structure. */
@@ -130,7 +136,7 @@ uint32_t ngf_client_play_event (NgfClient *client,
                                 NgfProplist *proplist);
 
 /**
- * Stop a currently active event.
+ * Stop an active event.
  *
  * @param client NgfClient instance
  * @param id Event id. If no such event, nothing is done.
@@ -139,6 +145,25 @@ uint32_t ngf_client_play_event (NgfClient *client,
 void ngf_client_stop_event (NgfClient *client,
                             uint32_t id);
 
+/**
+ * Pause active event.
+ *
+ * @param client NgfClient instance
+ * @param id Event id.
+ */
+
+void ngf_client_pause_event (NgfClient *client,
+                             uint32_t id);
+
+/**
+ * Resume paused event.
+ *
+ * @param client NgfClient instance
+ * @param id Event id.
+ */
+
+void ngf_client_resume_event (NgfClient *client,
+                              uint32_t id);
 
 #ifdef __cplusplus
 }

@@ -21,6 +21,7 @@
 #include <values.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 #include <check.h>
 #include <libngf/proplist.h>
@@ -69,7 +70,8 @@ START_TEST (test_parse_values)
     int32_t int_value;
     fail_unless (ngf_proplist_parse_integer (NULL, NULL) == 0);
     fail_unless (ngf_proplist_parse_integer ("", &int_value) == 0);
-    fail_unless (ngf_proplist_parse_integer ("1" &int_value) == 1 && int_value == 1);
+    fail_unless (ngf_proplist_parse_integer ("0", &int_value) == 1 && int_value == 0);
+    fail_unless (ngf_proplist_parse_integer ("1", &int_value) == 1 && int_value == 1);
     fail_unless (ngf_proplist_parse_integer ("555", &int_value) == 1 && int_value == 555);
     fail_unless (ngf_proplist_parse_integer ("-555", &int_value) == 1 && int_value == -555);
     fail_unless (ngf_proplist_parse_integer (max_int, &int_value) == 1 && int_value == INT32_MAX);
@@ -80,7 +82,7 @@ START_TEST (test_parse_values)
     uint32_t uint_value;
     fail_unless (ngf_proplist_parse_unsigned (NULL, NULL) == 0);
     fail_unless (ngf_proplist_parse_unsigned ("", &uint_value) == 0);
-    fail_unless (ngf_proplist_parse_unsigned ("1" &uint_value) == 1 && uint_value == 1);
+    fail_unless (ngf_proplist_parse_unsigned ("1", &uint_value) == 1 && uint_value == 1);
     fail_unless (ngf_proplist_parse_unsigned ("555", &uint_value) == 1 && uint_value == 555);
     fail_unless (ngf_proplist_parse_unsigned (max_uint, &uint_value) == 1 && uint_value == UINT32_MAX);
     fail_unless (ngf_proplist_parse_unsigned (min_uint, &uint_value) == 1 && uint_value == 0);
@@ -94,9 +96,11 @@ START_TEST (test_parse_values)
     fail_unless (ngf_proplist_parse_boolean ("true", &bool_value) == 1 && bool_value == 1);
     fail_unless (ngf_proplist_parse_boolean ("True", &bool_value) == 1 && bool_value == 1);
     fail_unless (ngf_proplist_parse_boolean ("1", &bool_value) == 1 && bool_value == 1);
+    fail_unless (ngf_proplist_parse_boolean ("false", &bool_value) == 1 && bool_value == 0);
+    fail_unless (ngf_proplist_parse_boolean ("FalsE", &bool_value) == 1 && bool_value == 0);
     fail_unless (ngf_proplist_parse_boolean ("FALSE", &bool_value) == 1 && bool_value == 0);
-    fail_unless (ngf_proplist_parse_boolean ("random", &bool_value) == 1 && bool_value == 0);
-    fail_unless (ngf_proplist_parse_boolean ("5", &bool_value) == 1 && bool_value == 0);
+    fail_unless (ngf_proplist_parse_boolean ("random", &bool_value) == 0);
+    fail_unless (ngf_proplist_parse_boolean ("5", &bool_value) == 0);
 }
 END_TEST
 
@@ -148,7 +152,7 @@ _proplist_cb (const char *key, const void *value, void *userdata)
     int32_t integer_value;
     int boolean_value;
 
-    if (strcmp (key, "first")) {
+    if (strcmp (key, "first") == 0) {
         string_value = (const char*) value;
         if (strcmp (value, "1") == 0)
             (*num_recognized)++;
@@ -181,10 +185,10 @@ START_TEST (test_foreach)
     proplist = ngf_proplist_new ();
     fail_unless (proplist != NULL);
 
-    ngf_proplist_sets (proplist, "first", "1");
-    ngf_proplist_set_as_integer (proplist, "second", -5);
-    ngf_proplist_set_as_unsigned (proplist, "third", 9);
-    ngf_proplist_set_as_boolean (proplist, "fourth", 1);
+    fail_unless (ngf_proplist_sets (proplist, "first", "1") == 1);
+    fail_unless (ngf_proplist_set_as_integer (proplist, "second", -5) == 1);
+    fail_unless (ngf_proplist_set_as_unsigned (proplist, "third", 9) == 1);
+    fail_unless (ngf_proplist_set_as_boolean (proplist, "fourth", 1) == 1);
 
     ngf_proplist_foreach (proplist, _proplist_cb, &num_recognized);
     fail_unless (num_recognized == 4);
@@ -248,7 +252,7 @@ START_TEST (test_foreach_extended)
     fail_unless (ngf_proplist_get_value_type (proplist, "integer.1") == NGF_PROPLIST_VALUE_TYPE_INTEGER);
 
     ngf_proplist_set_as_unsigned (proplist, "unsigned.1", 555);
-    fail_unless (ngf_proplist_get_value_type (proplist, "integer.1") == NGF_PROPLIST_VALUE_TYPE_UNSIGNED);
+    fail_unless (ngf_proplist_get_value_type (proplist, "unsigned.1") == NGF_PROPLIST_VALUE_TYPE_UNSIGNED);
 
     ngf_proplist_set_as_boolean (proplist, "boolean.1", 1);
     fail_unless (ngf_proplist_get_value_type (proplist, "boolean.1") == NGF_PROPLIST_VALUE_TYPE_BOOLEAN);

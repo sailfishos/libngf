@@ -63,9 +63,10 @@ void            ngf_proplist_free (NgfProplist *proplist);
  * @param proplist NgfProplist
  * @param key Key name
  * @param value Value for the key
+ * @return 1 on success, 0 out of memory or other error.
  */
 
-void            ngf_proplist_sets (NgfProplist *proplist, const char *key, const char *value);
+int             ngf_proplist_sets (NgfProplist *proplist, const char *key, const char *value);
 
 /**
  * Get a string value from property list.
@@ -81,9 +82,10 @@ const char*     ngf_proplist_gets (NgfProplist *proplist, const char *key);
  * @param proplist NgfProplist
  * @param key Key name
  * @param value Value for the key
+ * @return 1 on success, 0 out of memory or other error.
  */
 
-void            ngf_proplist_set_as_integer (NgfProplist *proplist, const char *key, int32_t value);
+int             ngf_proplist_set_as_integer (NgfProplist *proplist, const char *key, int32_t value);
 
 /**
  * Get integer value from the property list.
@@ -100,9 +102,10 @@ int             ngf_proplist_get_as_integer (NgfProplist *proplist, const char *
  * @param proplist NgfProplist
  * @param key Key name
  * @param value Value for the key
+ * @return 1 on success, 0 out of memory or other error.
  */
 
-void            ngf_proplist_set_as_unsigned (NgfProplist *proplist, const char *key, uint32_t value);
+int             ngf_proplist_set_as_unsigned (NgfProplist *proplist, const char *key, uint32_t value);
 
 /**
  * Get unsigned integer value from the property list.
@@ -119,9 +122,10 @@ int             ngf_proplist_get_as_unsigned (NgfProplist *proplist, const char 
  * @param proplist NgfProplist
  * @param key Key name
  * @param value Value for the key
+ * @return 1 on success, 0 out of memory or other error.
  */
 
-void            ngf_proplist_set_as_boolean (NgfProplist *proplist, const char *key, int value);
+int             ngf_proplist_set_as_boolean (NgfProplist *proplist, const char *key, int value);
 
 /**
  * Get a boolean value from the property list.

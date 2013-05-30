@@ -1,0 +1,42 @@
+Name: libngf
+Summary: Non-graphic feedback C-based client library
+Version: 0.23
+Release: 1
+Group: System/Libraries
+License: LGPL 2.1
+URL: https://github.com/nemomobile/libngf
+Sources:
+    - "%{name}-%{version}.tar.gz"
+Description: |
+    This package contains the C-based client library for accessing
+    Non-graphic feedback services.
+
+Requires:
+    - ngfd
+# PkgBR:
+#     - doxygen
+PkgConfigBR:
+    - glib-2.0 >= 2.18.0
+    - dbus-1 >= 1.0.2
+    - dbus-glib-1
+    - check
+Configure: none
+Builder: make
+SubPackages:
+#     - Name: doc
+#       Summary: Non-graphic feedback client documentation
+#       Group: Documentation
+#       Description: This package contains the client library API documentation.
+#       Files:
+#         - "%doc COPYING"
+#         - "%{_docdir}/%{name}-doc/html/*"
+
+    - Name: client
+      Summary: Non-graphic feedback test client
+      Group: System/Libraries
+      Description: Test client.
+
+    - Name: devel
+      Summary: Non-graphic feedback C-based development package
+      Group: Development/Libraries
+      Description: "%{summary}."

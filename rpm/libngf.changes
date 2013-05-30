@@ -1,0 +1,25 @@
+* Wed Jan 23 2013 Bernd Wachter <bernd.wachter@jollamobile.com> - 0.23
+- Update and fix proplist implementation and tests
+
+* Mon Dec 10 2012 Marko Saukko <marko.saukko@jollamobile.com> - 0.22
+- Updated packaging.
+
+* Mon Dec 03 2012 Bernd Wachter <bernd.wachter@jollamobile.com> - 0.22
+- Update to latest (nemo) sources
+- With latest ngfd, full support for playing notifications
+
+* Sun Nov 18 2012 Bernd Wachter <bernd.wachter@jollamobile.com> - 0.21
+- Update to latest (Nemo) upstream version
+
+* Thu Oct 20 2011 Marko Saukko <marko.saukko@cybercom.com> - 0.17
+- Added spectacle and disabled documentation.
+
+* Thu Feb 03 2011 Janne Mäntyharju <janne.mantyharju@digia.com> - 0.17
+- Fixes: BMC#13346
+- Added dependency to ngfd
+- Removed obsolete event definitions
+- Added pause and resume commands
+
+* Fri Dec 10 2010 Janne Mäntyharju <janne.mantyharju@digia.com> - 0.16
+- Initial MeeGo release
+- FEA#2889

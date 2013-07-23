@@ -13,8 +13,8 @@ Description: |
 
 Requires:
     - ngfd
-# PkgBR:
-#     - doxygen
+PkgBR:
+    - doxygen
 PkgConfigBR:
     - glib-2.0 >= 2.18.0
     - dbus-1 >= 1.0.2
@@ -23,13 +23,13 @@ PkgConfigBR:
 Configure: none
 Builder: make
 SubPackages:
-#     - Name: doc
-#       Summary: Non-graphic feedback client documentation
-#       Group: Documentation
-#       Description: This package contains the client library API documentation.
-#       Files:
-#         - "%doc COPYING"
-#         - "%{_docdir}/%{name}-doc/html/*"
+    - Name: doc
+      Summary: Non-graphic feedback client documentation
+      Group: Documentation
+      Description: This package contains the client library API documentation.
+      Files:
+          - "%doc COPYING"
+          - "%{_docdir}/%{name}-doc/html/*"
 
     - Name: client
       Summary: Non-graphic feedback test client

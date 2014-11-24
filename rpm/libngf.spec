@@ -70,7 +70,7 @@ install -m 644 doc/html/* %{buildroot}/usr/share/doc/libngf-doc/html/
 %files
 %defattr(-,root,root,-)
 %doc COPYING
-%{_libdir}/libngf0-0.1.so.*
+%{_libdir}/libngf0-*.so.*
 
 %files doc
 %defattr(-,root,root,-)

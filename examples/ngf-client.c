@@ -19,6 +19,8 @@ typedef struct _TestClient
 
     DBusConnection  *connection;
     NgfClient       *client;
+    gboolean         quit_after_event;
+    int              return_value;
 } TestClient;
 
 static char*
@@ -291,14 +293,19 @@ static void
 client_callback_cb (NgfClient *client, uint32_t event_id, NgfEventState state, void *userdata)
 {
     (void) client;
-    (void) userdata;
+    TestClient *c = (TestClient*) userdata;
 
     switch (state) {
         case NGF_EVENT_FAILED:
             g_print ("\nFailed (event_id=%d)\n", event_id);
+            if (c->quit_after_event)
+                g_main_loop_quit (c->loop);
+            c->return_value = 1;
             break;
         case NGF_EVENT_COMPLETED:
             g_print ("\nCompleted (event_id=%d)\n", event_id);
+            if (c->quit_after_event)
+                g_main_loop_quit (c->loop);
             break;
         case NGF_EVENT_PLAYING:
             g_print ("\nPlaying (event_id=%d)\n", event_id);
@@ -386,15 +393,23 @@ int
 main (int argc, char *argv[])
 {
     TestClient *c = NULL;
+    int ret = 0;
 
     c = g_new0 (TestClient, 1);
     if (!application_create (c))
         return 1;
 
+    if (argc > 1) {
+        int i;
+        for (i = 1; i < argc; i++)
+            parse_input (c, argv[i], strlen(argv[i]));
+        c->quit_after_event = TRUE;
+    }
     application_run (c);
     application_destroy (c);
 
+    ret = c->return_value;
     g_free (c);
 
-    return 0;
+    return ret;
 }

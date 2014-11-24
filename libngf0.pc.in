@@ -1,7 +1,7 @@
 prefix=/usr
 exec_prefix=${prefix}
 libdir=${exec_prefix}/lib
-includedir=${prefix}/include/libngf-1.0
+includedir=${prefix}/include/libngf-@NGF_API_VERSION@
 toolsdir=${exec_prefix}/bin
 
 Name: libngf

@@ -52,6 +52,13 @@ typedef void    (*NgfProplistExtendedCallback) (const char *key, const void *val
 NgfProplist*    ngf_proplist_new ();
 
 /**
+ * Create an identical copy of other proplist.
+ * @param orig Original NgfProplist a copy is made from.
+ * @return Copy of orig NgfProplist or NULL if no memory.
+ */
+NgfProplist*    ngf_proplist_copy (NgfProplist *orig);
+
+/**
  * Free property list.
  * @param proplist NgfProplist, if NULL nothing done.
  */

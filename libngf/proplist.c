@@ -35,6 +35,11 @@
 #define MAX_KEY_LENGTH 32
 #define MAX_VALUE_LENGTH 512
 
+#define PTR_TO_UINT32(p) ((uint32_t) ((uintptr_t) (p)))
+#define UINT32_TO_PTR(u) ((void*) ((uintptr_t) (u)))
+#define PTR_TO_INT32(p)  ((int32_t) ((intptr_t) (p)))
+#define INT32_TO_PTR(i) ((void*) ((intptr_t) (i)))
+
 typedef struct _PropEntry PropEntry;
 
 struct _PropEntry
@@ -65,6 +70,44 @@ ngf_proplist_new ()
     return proplist;
 }
 
+static void copy_cb (const char *key, const void *value, NgfProplistType type, void *userdata)
+{
+    NgfProplist *list = (NgfProplist*) userdata;
+
+    switch (type) {
+        case NGF_PROPLIST_VALUE_TYPE_STRING:
+            ngf_proplist_sets (list, key, (const char *) value);
+            break;
+
+        case NGF_PROPLIST_VALUE_TYPE_INTEGER:
+            ngf_proplist_set_as_integer (list, key, *(const int32_t *) value);
+            break;
+
+        case NGF_PROPLIST_VALUE_TYPE_UNSIGNED:
+            ngf_proplist_set_as_unsigned (list, key, *(const uint32_t *) value);
+            break;
+
+        case NGF_PROPLIST_VALUE_TYPE_BOOLEAN:
+            ngf_proplist_set_as_boolean (list, key, *(const int32_t *) value);
+            break;
+
+        default:
+            break;
+    }
+}
+
+NgfProplist*
+ngf_proplist_copy (NgfProplist *orig)
+{
+    NgfProplist *list = NULL;
+    if (!(list = ngf_proplist_new ()))
+        return NULL;
+
+    ngf_proplist_foreach_extended (orig, copy_cb, list);
+
+    return list;
+}
+
 static void
 _free_item (PropEntry *entry, void *userdata)
 {
@@ -75,7 +118,7 @@ _free_item (PropEntry *entry, void *userdata)
 
     if (entry->key)
         free (entry->key);
-    if (entry->value)
+    if (entry->type == NGF_PROPLIST_VALUE_TYPE_STRING && entry->value)
         free (entry->value);
     free (entry);
 }
@@ -146,7 +189,6 @@ ngf_proplist_set_as_integer (NgfProplist *proplist,
                              int32_t value)
 {
     PropEntry *item = NULL;
-    int32_t *data;
 
     if (proplist == NULL || key == NULL)
         goto error;
@@ -157,10 +199,8 @@ ngf_proplist_set_as_integer (NgfProplist *proplist,
 
     if ((item->key = strndup (key, (size_t) MAX_KEY_LENGTH)) == NULL)
         goto error;
-    if ((data = malloc (sizeof(int32_t))) == NULL)
-        goto error;
-    *data = value;
-    item->value = data;
+
+    item->value = INT32_TO_PTR (value);
     item->type  = NGF_PROPLIST_VALUE_TYPE_INTEGER;
     item->next  = NULL;
 
@@ -170,8 +210,6 @@ ngf_proplist_set_as_integer (NgfProplist *proplist,
 error:
     if (item && item->key)
         free (item->key);
-    if (data)
-        free (data);
     if (item)
         free (item);
     return 0;
@@ -183,7 +221,6 @@ ngf_proplist_set_as_unsigned (NgfProplist *proplist,
                               uint32_t value)
 {
     PropEntry *item = NULL;
-    uint32_t *data;
 
     if (proplist == NULL || key == NULL)
         goto error;
@@ -194,10 +231,7 @@ ngf_proplist_set_as_unsigned (NgfProplist *proplist,
 
     if ((item->key = strndup (key, (size_t) MAX_KEY_LENGTH)) == NULL)
         goto error;
-    if ((data = malloc (sizeof(uint32_t))) == NULL)
-        goto error;
-    *data = value;
-    item->value = data;
+    item->value = UINT32_TO_PTR (value);
     item->type  = NGF_PROPLIST_VALUE_TYPE_UNSIGNED;
     item->next  = NULL;
 
@@ -207,8 +241,6 @@ ngf_proplist_set_as_unsigned (NgfProplist *proplist,
 error:
     if (item && item->key)
         free (item->key);
-    if (data)
-        free (data);
     if (item)
         free (item);
     return 0;
@@ -227,7 +259,7 @@ ngf_proplist_get_as_integer (NgfProplist *proplist,
     for (iter = proplist->entries; iter; iter = iter->next) {
         if (strncmp (iter->key, key, (size_t) MAX_KEY_LENGTH) == 0
             && iter->type == NGF_PROPLIST_VALUE_TYPE_INTEGER) {
-            *integer_value = *(const int32_t*) iter->value;
+            *integer_value = PTR_TO_INT32 (iter->value);
             return 1;
         }
     }
@@ -248,7 +280,7 @@ ngf_proplist_get_as_unsigned (NgfProplist *proplist,
     for (iter = proplist->entries; iter; iter = iter->next) {
         if (strncmp (iter->key, key, (size_t) MAX_KEY_LENGTH) == 0
             && iter->type == NGF_PROPLIST_VALUE_TYPE_UNSIGNED) {
-            *unsigned_value = *(const uint32_t*) iter->value;
+            *unsigned_value = PTR_TO_UINT32 (iter->value);
             return 1;
         }
     }
@@ -262,7 +294,6 @@ ngf_proplist_set_as_boolean (NgfProplist *proplist,
                              int value)
 {
     PropEntry *item = NULL;
-    int *data;
 
     if (proplist == NULL || key == NULL)
         goto error;
@@ -273,10 +304,7 @@ ngf_proplist_set_as_boolean (NgfProplist *proplist,
 
     if ((item->key = strndup (key, (size_t) MAX_KEY_LENGTH)) == NULL)
         goto error;
-    if ((data = malloc (sizeof(int))) == NULL)
-        goto error;
-    *data = value > 0 ? 1 : 0;
-    item->value = data;
+    item->value = INT32_TO_PTR (value > 0 ? 1 : 0);
     item->type  = NGF_PROPLIST_VALUE_TYPE_BOOLEAN;
     item->next  = NULL;
 
@@ -286,8 +314,6 @@ ngf_proplist_set_as_boolean (NgfProplist *proplist,
 error:
     if (item && item->key)
         free (item->key);
-    if (data)
-        free (data);
     if (item)
         free (item);
     return 0;
@@ -306,7 +332,7 @@ ngf_proplist_get_as_boolean (NgfProplist *proplist,
     for (iter = proplist->entries; iter; iter = iter->next) {
         if (strncmp (iter->key, key, (size_t) MAX_KEY_LENGTH) == 0
             && iter->type == NGF_PROPLIST_VALUE_TYPE_BOOLEAN) {
-            *boolean_value = *(const int*) iter->value;
+            *boolean_value = PTR_TO_INT32 (iter->value);
             return 1;
         }
     }
@@ -388,12 +414,34 @@ ngf_proplist_foreach (NgfProplist *proplist,
                       void *userdata)
 {
     PropEntry *iter = NULL;
+    uint32_t uval;
+    int32_t ival;
 
     if (proplist == NULL || callback == NULL)
         return;
 
-    for (iter = proplist->entries; iter; iter = iter->next)
-        callback (iter->key, iter->value, userdata);
+    for (iter = proplist->entries; iter; iter = iter->next) {
+        switch (iter->type) {
+            case NGF_PROPLIST_VALUE_TYPE_STRING:
+                callback (iter->key, iter->value, userdata);
+                break;
+
+            case NGF_PROPLIST_VALUE_TYPE_INTEGER:
+            case NGF_PROPLIST_VALUE_TYPE_BOOLEAN:
+                ival = PTR_TO_INT32 (iter->value);
+                callback (iter->key, &ival, userdata);
+                break;
+
+            case NGF_PROPLIST_VALUE_TYPE_UNSIGNED:
+                uval = PTR_TO_UINT32 (iter->value);
+                callback (iter->key, &uval, userdata);
+                break;
+
+            default:
+                break;
+        }
+
+    }
 }
 
 void
@@ -402,12 +450,33 @@ ngf_proplist_foreach_extended (NgfProplist *proplist,
                                void *userdata)
 {
     PropEntry *iter = NULL;
+    uint32_t uval;
+    int32_t ival;
 
     if (proplist == NULL || callback == NULL)
         return;
 
-    for (iter = proplist->entries; iter; iter = iter->next)
-        callback (iter->key, iter->value, iter->type, userdata);
+    for (iter = proplist->entries; iter; iter = iter->next) {
+        switch (iter->type) {
+            case NGF_PROPLIST_VALUE_TYPE_STRING:
+                callback (iter->key, iter->value, iter->type, userdata);
+                break;
+
+            case NGF_PROPLIST_VALUE_TYPE_INTEGER:
+            case NGF_PROPLIST_VALUE_TYPE_BOOLEAN:
+                ival = PTR_TO_INT32 (iter->value);
+                callback (iter->key, &ival, iter->type, userdata);
+                break;
+
+            case NGF_PROPLIST_VALUE_TYPE_UNSIGNED:
+                uval = PTR_TO_UINT32 (iter->value);
+                callback (iter->key, &uval, iter->type, userdata);
+                break;
+
+            default:
+                break;
+        }
+    }
 }
 
 const char**

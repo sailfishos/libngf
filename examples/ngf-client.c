@@ -313,15 +313,6 @@ client_callback_cb (NgfClient *client, uint32_t event_id, NgfEventState state, v
         case NGF_EVENT_PAUSED:
             g_print ("\nPaused (event_id=%d)\n", event_id);
             break;
-        case NGF_EVENT_BUSY:
-            g_print ("\nBusy (event_id=%d)\n", event_id);
-            break;
-        case NGF_EVENT_LONG:
-            g_print ("\nLong (event_id=%d)\n", event_id);
-            break;
-        case NGF_EVENT_SHORT:
-            g_print ("\nShort (event_id=%d)\n", event_id);
-            break;
 
         default:
             g_print ("\nUnknown (event_id=%d)\n", event_id);

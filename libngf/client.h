@@ -51,14 +51,6 @@ typedef enum _NgfEventState
     /** Event is in paused state when pause is called. */
     NGF_EVENT_PAUSED    = 3,
 
-    /** Event is busy, because there is a more higher priority event playing. */
-    NGF_EVENT_BUSY      = (1 << 2),
-
-    /** Event will be played using a long tone */
-    NGF_EVENT_LONG      = (1 << 3),
-
-    /** Event will be played using a short tone */
-    NGF_EVENT_SHORT     = (1 << 4)
 } NgfEventState;
 
 /** Internal client structure. */

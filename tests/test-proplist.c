@@ -264,6 +264,76 @@ START_TEST (test_foreach_extended)
 }
 END_TEST
 
+#define TEST_STR        "string.1"
+#define TEST_STR_VALUE  "string value"
+
+#define TEST_INT        "integer.1"
+#define TEST_INT_VALUE  (-555)
+
+#define TEST_UINT       "unsigned.1"
+#define TEST_UINT_VALUE (555)
+
+#define TEST_BOOL       "boolean.1"
+#define TEST_BOOL_VALUE (1)
+
+static void
+_copy_cb (const char *key, const void *value, NgfProplistType type, void *userdata)
+{
+    int *identical_values = (int *) userdata;
+
+    switch (type) {
+        case NGF_PROPLIST_VALUE_TYPE_STRING:
+            fail_unless (strcmp ((const char*) value, TEST_STR_VALUE) == 0);
+            (*identical_values)++;
+            break;
+
+        case NGF_PROPLIST_VALUE_TYPE_INTEGER:
+            fail_unless (*(const int32_t *) value == TEST_INT_VALUE);
+            (*identical_values)++;
+            break;
+
+        case NGF_PROPLIST_VALUE_TYPE_UNSIGNED:
+            fail_unless (*(const uint32_t *) value == TEST_UINT_VALUE);
+            (*identical_values)++;
+            break;
+
+        case NGF_PROPLIST_VALUE_TYPE_BOOLEAN:
+            fail_unless (*(const int32_t *) value == TEST_BOOL_VALUE);
+            (*identical_values)++;
+            break;
+
+        default:
+            fail_unless (0);
+    }
+}
+
+START_TEST (test_copy)
+{
+    NgfProplist *proplist = NULL;
+    NgfProplist *copy = NULL;
+    int identical_values = 0;
+    int identical_values_wanted = 4;
+
+    proplist = ngf_proplist_new ();
+    fail_unless (proplist != NULL);
+
+    ngf_proplist_sets (proplist, TEST_STR, TEST_STR_VALUE);
+    ngf_proplist_set_as_integer (proplist, TEST_INT, TEST_INT_VALUE);
+    ngf_proplist_set_as_unsigned (proplist, TEST_UINT, TEST_UINT_VALUE);
+    ngf_proplist_set_as_boolean (proplist, TEST_BOOL, TEST_BOOL_VALUE);
+
+    copy = ngf_proplist_copy (proplist);
+    fail_unless (copy != NULL);
+
+    ngf_proplist_free (proplist);
+
+    ngf_proplist_foreach_extended (copy, _copy_cb, &identical_values);
+    fail_unless (identical_values == identical_values_wanted);
+
+    ngf_proplist_free (copy);
+}
+END_TEST
+
 START_TEST (test_get_keys)
 {
     NgfProplist *proplist = NULL;
@@ -331,6 +401,10 @@ main (int argc, char *argv[])
 
     tc = tcase_create ("Get list of keys");
     tcase_add_test (tc, test_get_keys);
+    suite_add_tcase (s, tc);
+
+    tc = tcase_create ("Test copy");
+    tcase_add_test (tc, test_copy);
     suite_add_tcase (s, tc);
 
     sr = srunner_create (s);

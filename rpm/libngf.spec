@@ -7,7 +7,6 @@ Group:      System/Libraries
 License:    LGPL 2.1
 URL:        https://github.com/nemomobile/libngf
 Source0:    %{name}-%{version}.tar.gz
-Source100:  libngf.yaml
 Requires:   ngfd
 Requires(post): /sbin/ldconfig
 Requires(postun): /sbin/ldconfig

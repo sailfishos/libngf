@@ -49,7 +49,7 @@ typedef void    (*NgfProplistExtendedCallback) (const char *key, const void *val
  * @return NgfProplist or NULL if no memory.
  */
 
-NgfProplist*    ngf_proplist_new ();
+NgfProplist*    ngf_proplist_new (void);
 
 /**
  * Create an identical copy of other proplist.

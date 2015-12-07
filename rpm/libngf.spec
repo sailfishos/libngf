@@ -4,8 +4,8 @@ Summary:    Non-graphic feedback C-based client library
 Version:    0.23
 Release:    1
 Group:      System/Libraries
-License:    LGPL 2.1
-URL:        https://github.com/nemomobile/libngf
+License:    LGPLv2.1
+URL:        https://git.merproject.org/mer-core/libngf
 Source0:    %{name}-%{version}.tar.gz
 Requires:   ngfd
 Requires(post): /sbin/ldconfig
@@ -31,7 +31,6 @@ This package contains the client library API documentation.
 
 %package client
 Summary:    Non-graphic feedback test client
-Group:      System/Libraries
 Requires:   %{name} = %{version}-%{release}
 
 %description client
@@ -39,7 +38,6 @@ Test client.
 
 %package devel
 Summary:    Non-graphic feedback C-based development package
-Group:      Development/Libraries
 Requires:   %{name} = %{version}-%{release}
 
 %description devel

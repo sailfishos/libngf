@@ -4,8 +4,8 @@ Summary:    Non-graphic feedback C-based client library
 Version:    0.23
 Release:    1
 Group:      System/Libraries
-License:    LGPLv2.1
-URL:        https://git.merproject.org/mer-core/libngf
+License:    LGPLv2+
+URL:        https://git.sailfishos.org/mer-core/libngf
 Source0:    %{name}-%{version}.tar.gz
 Requires:   ngfd
 Requires(post): /sbin/ldconfig
@@ -66,23 +66,22 @@ install -m 644 doc/html/* %{buildroot}/usr/share/doc/libngf-doc/html/
 
 %files
 %defattr(-,root,root,-)
-%doc COPYING
+%license COPYING
 %{_libdir}/libngf0-*.so.*
 
 %files doc
 %defattr(-,root,root,-)
-%doc COPYING
 %{_docdir}/%{name}-doc/html/*
 
 %files client
 %defattr(-,root,root,-)
-%doc COPYING
 %{_bindir}/ngf-client
 
 %files devel
 %defattr(-,root,root,-)
-%doc COPYING
 %{_libdir}/libngf0.so
+%dir %{_includedir}/%{name}-1.0
+%dir %{_includedir}/%{name}-1.0/%{name}
 %{_includedir}/%{name}-1.0/%{name}/ngf.h
 %{_includedir}/%{name}-1.0/%{name}/proplist.h
 %{_includedir}/%{name}-1.0/%{name}/client.h

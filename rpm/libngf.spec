@@ -48,7 +48,7 @@ Requires:   %{name} = %{version}-%{release}
 
 
 %build
-%autogen
+%autogen --disable-static
 doxygen doc/doxygen.cfg
 make %{?jobs:-j%jobs}
 
@@ -56,6 +56,7 @@ make %{?jobs:-j%jobs}
 %install
 rm -rf %{buildroot}
 %make_install
+rm -f %{buildroot}/%{_libdir}/*.la
 
 install -d %{buildroot}/usr/share/doc/libngf-doc/html/
 install -m 644 doc/html/* %{buildroot}/usr/share/doc/libngf-doc/html/

@@ -1,11 +1,10 @@
 Name:       libngf
 
 Summary:    Non-graphic feedback C-based client library
-Version:    0.23
+Version:    0.29
 Release:    1
-Group:      System/Libraries
 License:    LGPLv2+
-URL:        https://git.sailfishos.org/mer-core/libngf
+URL:        https://github.com/sailfishos/libngf
 Source0:    %{name}-%{version}.tar.gz
 Requires:   ngfd
 Requires(post): /sbin/ldconfig
@@ -23,7 +22,6 @@ Non-graphic feedback services.
 
 %package doc
 Summary:    Non-graphic feedback client documentation
-Group:      Documentation
 Requires:   %{name} = %{version}-%{release}
 
 %description doc
@@ -50,13 +48,11 @@ Requires:   %{name} = %{version}-%{release}
 %build
 %autogen --disable-static
 doxygen doc/doxygen.cfg
-make %{?jobs:-j%jobs}
+%make_build
 
 
 %install
-rm -rf %{buildroot}
 %make_install
-rm -f %{buildroot}/%{_libdir}/*.la
 
 install -d %{buildroot}/usr/share/doc/libngf-doc/html/
 install -m 644 doc/html/* %{buildroot}/usr/share/doc/libngf-doc/html/
@@ -66,20 +62,16 @@ install -m 644 doc/html/* %{buildroot}/usr/share/doc/libngf-doc/html/
 %postun -p /sbin/ldconfig
 
 %files
-%defattr(-,root,root,-)
 %license COPYING
 %{_libdir}/libngf0-*.so.*
 
 %files doc
-%defattr(-,root,root,-)
 %{_docdir}/%{name}-doc/html/*
 
 %files client
-%defattr(-,root,root,-)
 %{_bindir}/ngf-client
 
 %files devel
-%defattr(-,root,root,-)
 %{_libdir}/libngf0.so
 %dir %{_includedir}/%{name}-1.0
 %dir %{_includedir}/%{name}-1.0/%{name}

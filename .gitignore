@@ -1,1 +1,9 @@
 .libs
+.deps
+Makefile
+Makefile.in
+/m4
+/doc
+*.o
+*.lo
+*.la
